@@ -1,0 +1,84 @@
+---
+title: "`odin` and `dust`"
+author: "MRC Centre for Global Infectious Disease Analysis"
+format: revealjs
+---
+
+# `odin`
+
+- A "domain specific language"
+- Originally designed for ordinary differential equations
+- Some very basic discrete time/stochastic support
+
+::: {.notes}
+Odin is a DSL - a domain specific language. It exists to describe a specific problem efficiently. We developed it to describe ordinary differential equations which evolve a system in continuous time. This is a great target for DSL because it's just a collection of mathematical truths - rates exist independent of any idea of order of operation.
+:::
+
+## An example
+
+```r
+deriv(S) <- -beta * S * I / N
+deriv(I) <- beta * S * I / N - sigma * I
+deriv(R) <- sigma * I
+
+initial(S) <- N - I0
+initial(I) <- I0
+initial(R) <- 0
+
+N <- user(1e6)
+I0 <- user(1)
+beta <- user(4)
+sigma <- user(2)
+```
+
+. . .
+
+Things to note:
+
+* out of order definition
+* every variable has `initial` and `deriv` pair
+
+## Compiling the model
+
+```{r}
+#| echo: true
+#| code-fold: true
+gen <- odin::odin({
+  deriv(S) <- -beta * S * I / N
+  deriv(I) <- beta * S * I / N - sigma * I
+  deriv(R) <- sigma * I
+  initial(S) <- N - I0
+  initial(I) <- I0
+  initial(R) <- 0
+  N <- user(1e6)
+  I0 <- user(1)
+  beta <- user(4)
+  sigma <- user(2)
+})
+```
+
+## Running the model
+
+```{r}
+#| echo: true
+#| code-fold: true
+mod <- gen$new()
+t <- seq(0, 10, length.out = 501)
+y <- mod$run(t)
+plot(I ~ t, as.data.frame(y), type = "l")
+```
+
+## Comments
+
+* Requires the `odin` package, along with `pkgbuild` and `pkgload`
+* Requires a working C compiler
+
+# Discrete time models
+
+# Advanced topics
+
+* debugging with gdb and valgrind
+* gpu use
+* multiple parameter sets at once
+* deterministic models from stochastic ones
+* mixed ODE/stochastic models
