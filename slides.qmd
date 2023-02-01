@@ -243,8 +243,8 @@ Don't forget to mention that the index corresponds to the range from the left ha
 
 ```r
 m[, ] <- user() # age-structured contact matrix
-s_ij[, ] <- m[i, j] * sum(I[i, ])
-lambda[] <- beta * sum(s_ij[, i])
+s_ij[, ] <- m[i, j] * sum(I[j, ])
+lambda[] <- beta * sum(s_ij[i, ])
 p_SI[] <- 1 - exp(-lambda[i] * dt)
 update(S[]) <- S[i] - n_SI[i]
 N_age <- user()
