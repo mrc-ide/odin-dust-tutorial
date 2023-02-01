@@ -15,8 +15,8 @@ p_vacc[, ] <- 1 - exp(-eta[i, j] * dt)
 
 # Force of infection
 m[, ] <- user() # age-structured contact matrix
-s_ij[, ] <- m[i, j] * sum(I[i, ])
-lambda[] <- beta * sum(s_ij[, i])
+s_ij[, ] <- m[i, j] * sum(I[j, ])
+lambda[] <- beta * sum(s_ij[i, ])
 
 # Draws from binomial distributions for numbers changing between
 # compartments:

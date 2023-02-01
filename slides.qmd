@@ -247,7 +247,12 @@ s_ij[, ] <- m[i, j] * sum(I[i, ])
 lambda[] <- beta * sum(s_ij[, i])
 p_SI[] <- 1 - exp(-lambda[i] * dt)
 update(S[]) <- S[i] - n_SI[i]
+N_age <- user()
+dim(S) <- N_age
+dim(m) <- c(N_age, N_age)
 ```
+
+You must declare the dimensions of all arrays!
 
 ## Worked example
 

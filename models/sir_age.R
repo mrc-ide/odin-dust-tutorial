@@ -14,8 +14,8 @@ p_IR <- 1 - exp(-gamma * dt) # I to R
 
 # Force of infection
 m[, ] <- user() # age-structured contact matrix
-s_ij[, ] <- m[i, j] * I[i]
-lambda[] <- beta * sum(s_ij[, i])
+s_ij[, ] <- m[i, j] * I[j]
+lambda[] <- beta * sum(s_ij[i, ])
 
 # Draws from binomial distributions for numbers changing between
 # compartments:
