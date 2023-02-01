@@ -1,6 +1,6 @@
 update(S) <- S - n_SI
-update(I) <- I + n_SI - n_SR
-update(R) <- R + n_SR
+update(I) <- I + n_SI - n_IR
+update(R) <- R + n_IR
 
 n_SI <- rbinom(S, 1 - exp(-beta * I / N))
 n_IR <- rbinom(I, 1 - exp(-sigma))
