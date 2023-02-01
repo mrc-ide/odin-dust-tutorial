@@ -14,7 +14,7 @@ You can extend this same idea to discrete time models, if you're willing to make
 
 # What about stochastic models?
 
-One thing that discrete time models allow for is stochasticity - random updates to parameters. You can't do this in continuous time models (unless you make some very limiting assumptions and consider only brownian motion changes to a single variable to get some degree of tractability for an SDE). As soon as things become stochastic we are rarely interested in single realisations from the process, but instead some set (or summary of a set) of realisations of the stochastic process.
+One thing that discrete time models allow for is stochasticity - random updates to variables. You can't do this in continuous time models (unless you make some very limiting assumptions and consider only brownian motion changes to a single variable to get some degree of tractability for an SDE). As soon as things become stochastic we are rarely interested in single realisations from the process, but instead some set (or summary of a set) of realisations of the stochastic process.
 
 (There's lots to discuss here if people are interested, especially once we get to the parallelism section, so we'll leave it until there)
 
@@ -23,10 +23,11 @@ Same example here of ODE model converted to use binomial draws, then a summary  
 # Real model here (epi)
 
 * show run, simulate - any other methods?
+* time scaling
 
 # Differences in odin and odin.dust discrete support
 
-Before getting to the good bits, here's wht you can't do:
+Before getting to the good bits, here's what you can't do:
 
 * no use of `output()`; this is required in ODE models to use non-variable quantities but this is not needed in discrete time models
 * no use of `interpolate()`; we might restore this later

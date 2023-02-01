@@ -38,6 +38,10 @@ Things to note:
 * out of order definition
 * every variable has `initial` and `deriv` pair
 
+::: {.notes}
+This is the original form of the DSL, supported since 2016.
+:::
+
 ## Compiling the model
 
 ```{r}
@@ -57,6 +61,10 @@ gen <- odin::odin({
 })
 ```
 
+::: {.notes}
+The `odin::odin` call generates C code, compiles it with `gcc` or `clang` to create a shared library, and loads that plus support code into R to create a generator object `gen`
+:::
+
 ## Running the model
 
 ```{r}
@@ -68,12 +76,198 @@ y <- mod$run(t)
 plot(I ~ t, as.data.frame(y), type = "l")
 ```
 
+::: {.notes}
+From the generator object `gen` we can construct a model (`mod`), here using no parameters -- just using default parameters as defined above. We run over a set of times and output the value of the system at a number of intermediate times.
+:::
+
 ## Comments
 
 * Requires the `odin` package, along with `pkgbuild` and `pkgload`
 * Requires a working C compiler
+* Sort of works for discrete time and stochastic models
 
-# Discrete time models
+::: {.notes}
+Running ODE models is fairly simple because they define a fairly pure function; `f(t, theta) -> y` which is always the same given `t` and `theta`. That's not the case for stochastic models because each run through gives a different answer
+:::
+
+# Discrete time stochastic models
+
+```r
+update(S) <- S - n_SI
+update(I) <- I + n_SI - n_SR
+update(R) <- R + n_SR
+
+n_SI <- rbinom(S, 1 - exp(-beta * I / N))
+n_IR <- rbinom(I, 1 - exp(-sigma))
+
+initial(S) <- N - I0
+initial(I) <- I0
+initial(R) <- 0
+
+N <- user(1e6)
+I0 <- user(1)
+beta <- user(4)
+sigma <- user(2)
+```
+
+::: {.notes}
+This is a stochastic version of the previous continuous time model. Here, we've converted the rates of change between S and I and I and R into random variables. We've had to be careful to only draw from the distribution once and reuse it (so the number that we increase I by is the same as the number we decrease S by)
+
+The core difference is that `deriv(x)` which used to represent the rate of change in `x` with respect to time, is replaced by `update(x)` which represents the new value of `x` in the next timestep
+:::
+
+
+### Compiling the model with `odin`
+
+```{r}
+gen <- odin::odin("models/sir_stochastic.R")
+```
+
+### Compiling the model with `odin.dust`
+
+```{r}
+gen <- odin.dust::odin_dust("models/sir_stochastic.R")
+```
+
+# Epi: A realistic model
+
+(TODO)
+
+# Differences between `odin` and `odin.dust`:
+
+* no use of `output()`; this is required in ODE models to use non-variable quantities but this is not needed in discrete time models
+* no use of `interpolate()`; we might restore this later
+* no use of `delay()`; this is hard to do well and was not well supported for discrete time models anyway
+* not all stochastic distributions supported; just tell us if one you need is missing
+* the interface for working with the models is totally different
+
+Details: https://mrc-ide.github.io/odin.dust/articles/porting.html
+
+# Running in parallel
+
+(diagram showing cpu vs walltime)
+
+(diagram showing efficiency)
+
+(idea of particles)
+
+(brief note on RNG design)
+
+(brief note on OpenMP)
+
+## System requirement: OpenMP
+
+You need OpenMP set up to compile and run models in parallel:
+
+```{r}
+dust::dust_openmp_support()
+```
+
+* Linux, Windows: works out the box - including on the cluster
+* macOS: possible but annoying
+
+## Running in parallel does not change results
+
+```r
+gen$new(pars, 0, n_particles = 128, n_threads = 16)
+```
+
+:::{r}
+**Running in parallel will not change results** - this is an important design decision in dust. No matter how many threads you use for your problem you should get the same answer. It is possible that you may see different answers on different platforms however.
+
+To bring up a model with more than one thread, add `n_threads = 8` when you initialise it, or use the `set_n_threads()` method on an object that already exists. Going beyond the number of threads you have on your machine will not typically show a good speedup.
+
+Many methods are parallelised, but `run` and `simulate` are the ones you'll notice.
+
+Unlike `parallel::parLapply` etc more threads does not increase memory usage.
+:::
+
+## Parallelisation strategy
+
+**Always parallelise at the coarsest level first**
+
+* Same analysis independently on 10 regions - send each to cluster separately
+* MCMC chains within analysis - run each on a separate process
+* Within each chain, parallelise at the particle level
+
+::: {.notes}
+There are two things fighting us here:
+
+1. Amdahl's law, which says that if our program is only partly parallel then our parallelisation will have diminishing returns
+2. Inefficiencies in the parallelism - this includes overhead around the parallelism itelf (copying data around etc) and limitations in the design (if the operating system wants to write to memory that is nearby on two different threads)
+
+Expect a pretty good speedup to about 8 cores or so for particles. You can keep a 32 core node very happy with four MCMC chains above that.
+:::
+
+## Why can't we use `mclapply` or `parLapply`?
+
+::: {.notes}
+* Efficiency, especially data transfer
+* Seeding and rng state - won't actually differ
+:::
+
+# Epi: Adding more dimensions
+
+(TODO)
+
+# Packaging your models
+
+* Easier to distribute
+* Bundle together model and support code
+* Much faster startup time
+
+## Create a package
+
+1. Basic skeleton using `usethis::create_r_package("mymodel")`
+2. Add DSL code to `inst/odin`
+3. Edit `DESCRIPTION`:
+   - Add `cpp11` and `dust` to section `LinkingTo`
+   - Add `dust` to `Imports`
+   - Add `SystemRequirements: C++11`
+4. Add `#' @useDynLib sircovid, .registration = TRUE` somewhere (e.g., `R/zzz.R`)
+5. Run `odin.dust::odin_dust_package()` to generate files
+6. Run `devtools::document()` to update `NAMESPACE`
+7. Run `pkgload::load_all()` to compile and load
+
+## Edit a package
+
+1. Edit DSL code in `inst/odin`
+2. `odin.dust::odin_dust_package()` to generate files
+3. Run `pkgload::load_all()` to compile and load
+
+## Next steps
+
+* Add wrapper functions to generate parameters, process output etc
+* Write unit tests to keep things working
+* Set up GitHub Actions to run tests automatically
+* Create a nice website with `pkgdown`
+
+# Epi: Time varying parameters
+
+(TODO)
+
+# Massively parallel; GPUs
+
+* CPU: do a few things, but do anything
+* GPU: do a massive number of things, but all the same
+
+## Requirements
+
+* An NVIDIA GPU - at least a 20xx series (~2018 or later)
+* All the `nvcc` toolchain (this is annoying)
+
+## Workflow
+
+* Recompile the model code again, changing real type
+* Initialise model specifying which gpu to use
+* Benchmark with NVIDIA's tools (nsight compute etc)
+
+Expect to run 100,000 particles or more, and have a strategy for working with this much data!
+
+## Tuning
+
+* block size
+* registers
 
 # Advanced topics
 
