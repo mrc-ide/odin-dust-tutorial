@@ -447,6 +447,7 @@ initial(infections_tot) <- 0
 # Daily infections incidence
 update(infections_inc) <- if (step %% steps_per_day == 0)
   sum(n_SI) else infections_inc + sum(n_SI)
+initial(infections_inc) <- 0
 ```
 
 # Advanced topics

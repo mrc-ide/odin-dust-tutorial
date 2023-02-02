@@ -37,7 +37,7 @@ new_S[, ] <- S[i, j] - n_SI[i, j] - n_S_vacc[i, j] +
   (if (j == 1) n_S_vacc[i, N_vacc_classes] else n_S_vacc[i, j - 1])
 
 new_I[, , ] <- I[i, j, k] - n_I_progress[i, j, k] +
-  (if (i == 1) n_SI[i, j] else n_I_progress[i, j, k - 1])
+  (if (k == 1) n_SI[i, j] else n_I_progress[i, j, k - 1])
 
 # Cumulative infections
 update(infections_tot) <- infections_tot + sum(n_SI)
@@ -45,6 +45,7 @@ initial(infections_tot) <- 0
 # Daily infections incidence
 update(infections_inc) <- if (step %% steps_per_day == 0)
   sum(n_SI) else infections_inc + sum(n_SI)
+initial(infections_inc) <- 0
 
 # Initial states:
 initial(S[, ]) <- S_ini[i, j]
