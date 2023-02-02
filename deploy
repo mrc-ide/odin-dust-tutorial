@@ -1,0 +1,20 @@
+#!/bin/bash
+set -eu
+SITE_DIR=site
+
+VERSION=$(git rev-parse --short HEAD)
+REMOTE_URL=$(git config --get remote.origin.url)
+
+rm -rf ${SITE_DIR}
+mkdir -p ${SITE_DIR}
+cp -r slides_files $SITE_DIR
+cp slides.html $SITE_DIR/index.html
+touch $SITE_DIR/.nojekyll
+
+rm -rf ${SITE_DIR}/.git
+git init ${SITE_DIR}
+git -C ${SITE_DIR} checkout --orphan gh-pages
+git -C ${SITE_DIR} add .
+git -C ${SITE_DIR} commit --no-verify -m "Update docs for version ${VERSION}"
+git -C ${SITE_DIR} remote add origin -m "gh-pages" ${REMOTE_URL}
+git -C ${SITE_DIR} push --force -u origin gh-pages
