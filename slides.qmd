@@ -72,9 +72,7 @@ This is the original form of the DSL, supported since 2016.
 ## Compiling the model
 
 ```r
-#| echo: true
-#| code-fold: true
-gen <- odin::odin({
+sir <- odin::odin({
   deriv(S) <- -beta * S * I / N
   deriv(I) <- beta * S * I / N - sigma * I
   deriv(R) <- sigma * I
@@ -94,9 +92,7 @@ The `odin::odin` call generates C code, compiles it with `gcc` or `clang` to cre
 
 ## Running the model
 
-```
-#| echo: true
-#| code-fold: true
+```r
 mod <- gen$new()
 t <- seq(0, 10, length.out = 501)
 y <- mod$run(t)
@@ -107,7 +103,7 @@ plot(I ~ t, as.data.frame(y), type = "l")
 From the generator object `gen` we can construct a model (`mod`), here using no parameters -- just using default parameters as defined above. We run over a set of times and output the value of the system at a number of intermediate times.
 :::
 
-## Comments
+## Some comments
 
 * Requires the `odin` package, along with `pkgbuild` and `pkgload`
 * Requires a working C compiler
@@ -175,7 +171,7 @@ mod$run(10)
 * `simulate`: runs over a series of times, returning values at each time
 * Docs for each method here: <https://mrc-ide.github.io/dust/reference/dust_generator.html>
 
-# `odin` vs `odin.dust`:
+## `odin` vs `odin.dust`:
 
 * no use of `output()`
 * no use of `interpolate()` (we might restore this later)
@@ -265,10 +261,6 @@ dim(m) <- c(N_age, N_age)
 ```
 
 You must declare the dimensions of all arrays!
-
-## Worked example
-
-(in R)
 
 # Running in parallel
 
@@ -404,15 +396,15 @@ beta <- if (step >= length(beta_step))
   beta_step[length(beta_step)] else beta_step[step + 1]
 ```
 
-# Massively parallel; GPUs
+# Massively parallel: GPUs
 
-* CPU: do a few things, but do anything
+* CPU: do anything, but only a few at once
 * GPU: do a massive number of things, but all the same
 
 ## Requirements
 
 * An NVIDIA GPU - at least a 20xx series (~2018 or later)
-* All the `nvcc` toolchain (this is annoying)
+* All the `nvcc` toolchain (this is annoying to install)
 
 ## Workflow
 
@@ -420,12 +412,14 @@ beta <- if (step >= length(beta_step))
 * Initialise model specifying which gpu to use
 * Benchmark with NVIDIA's tools (nsight compute etc)
 
-Expect to run 100,000 particles or more, and have a strategy for working with this much data!
+```r
+gpu <- dust::dust_cuda_options(fast_math = TRUE)
+gen <- odin.dust::odin_dust_(path, real_type = "float", gpu = gpu)
+mod <- gen$new(list(), 0, 65536, gpu_config = 0L)
+mod$run(100) # runs on GPU!
+```
 
-## Tuning
-
-* block size
-* registers
+Expect to run tens of thousands of particles or more, and have a strategy for working with this much data!
 
 # Epi: Erlang distributions
 
@@ -444,7 +438,14 @@ dim(I) <- c(N_age, N_vacc_classes, k_I)
 # Advanced topics
 
 * debugging with gdb and valgrind
-* gpu use
+* profiling and optimising gpu use
 * multiple parameter sets at once
 * deterministic models from stochastic ones
 * mixed ODE/stochastic models
+
+# Resources
+
+* <https://mrc-ide.github.io/odin>
+* <https://mrc-ide.github.io/dust>
+* <https://mrc-ide.github.io/odin.dust>
+* <https://mrc-ide.github.io/odin-dust-tutorial>
