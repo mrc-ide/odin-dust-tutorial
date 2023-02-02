@@ -192,6 +192,18 @@ Details: <https://mrc-ide.github.io/odin.dust/articles/porting.html>
 * `delay` - these interact weirdly with stochastic processes
 :::
 
+## Current supported distributions for random draws
+
+
+* uniform: `runif(min, max)`
+* normal: `rnorm(mean, sd)`
+* hypergeometric: `rhyper(m, n, k)`
+* poisson: `rpois(lambda)`
+* binomial: `rbinom(n, p)`
+* gamma: `rgamma(shape, scale)`
+* negative binomial: `rnbinom(size, prob)`
+* exponential: `rexp(rate)`
+
 # Epi: Models with arrays
 
 :::: {.columns}
