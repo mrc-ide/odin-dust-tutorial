@@ -188,7 +188,7 @@ Details: <https://mrc-ide.github.io/odin.dust/articles/porting.html>
 * `delay` - these interact weirdly with stochastic processes
 :::
 
-## Supported random draws0
+## Supported random draws
 
 * uniform: `runif(min, max)`
 * normal: `rnorm(mean, sd)`
