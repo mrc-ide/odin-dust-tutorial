@@ -250,7 +250,7 @@ Don't forget to mention that the index corresponds to the range from the left ha
 
 ```r
 m[, ] <- user() # age-structured contact matrix
-s_ij[, ] <- m[i, j] * sum(I[j, ])
+s_ij[, ] <- m[i, j] * I[j]
 lambda[] <- beta * sum(s_ij[i, ])
 p_SI[] <- 1 - exp(-lambda[i] * dt)
 update(S[]) <- S[i] - n_SI[i]
@@ -427,7 +427,7 @@ k_I <- user(integer = TRUE)
 p_I_progress <- 1 - exp(-gamma * dt) # I to R
 n_I_progress[, , ] <- rbinom(I[i, j, k], p_I_progress)
 new_I[, , ] <- I[i, j, k] - n_I_progress[i, j, k] +
-  (if (i == 1) n_SI[i, j] else n_I_progress[i, j, k - 1])
+  (if (k == 1) n_SI[i, j] else n_I_progress[i, j, k - 1])
 
 update(I[, , ]) <- new_I[i, j, k]
 update(R[, ]) <- R[i, j] + n_I_progress[i, j, k_I]
