@@ -192,8 +192,7 @@ Details: <https://mrc-ide.github.io/odin.dust/articles/porting.html>
 * `delay` - these interact weirdly with stochastic processes
 :::
 
-## Current supported distributions for random draws
-
+## Supported random draws0
 
 * uniform: `runif(min, max)`
 * normal: `rnorm(mean, sd)`
@@ -439,6 +438,21 @@ new_I[, , ] <- I[i, j, k] - n_I_progress[i, j, k] +
 update(I[, , ]) <- new_I[i, j, k]
 update(R[, ]) <- R[i, j] + n_I_progress[i, j, k_I]
 dim(I) <- c(N_age, N_vacc_classes, k_I)
+```
+
+# Epi: daily incidence calculation
+
+```r
+steps_per_day <- user(integer = TRUE)
+dt <- 1 / steps_per_day
+
+# Cumulative infections
+update(infections_tot) <- infections_tot + sum(n_SI)
+initial(infections_tot) <- 0
+
+# Daily infections incidence
+update(infections_inc) <- if (step %% steps_per_day == 0)
+  sum(n_SI) else infections_inc + sum(n_SI)
 ```
 
 # Advanced topics
