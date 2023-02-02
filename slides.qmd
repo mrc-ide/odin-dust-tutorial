@@ -453,9 +453,12 @@ initial(infections_inc) <- 0
 * deterministic models from stochastic ones
 * mixed ODE/stochastic models
 
-# Resources
+# Resources {.smaller}
 
 * <https://mrc-ide.github.io/odin>
+* <https://mrc-ide.github.io/odin/articles/functions.html>
 * <https://mrc-ide.github.io/dust>
 * <https://mrc-ide.github.io/odin.dust>
 * <https://mrc-ide.github.io/odin-dust-tutorial>
+* <https://wellcomeopenresearch.org/articles/5-288>
+* <https://github.com/mrc-ide/sircovid/blob/master/inst/odin/lancelot.R>
