@@ -179,7 +179,9 @@ mod$run(10)
 * not all stochastic distributions supported; just tell us if one you need is missing
 * the interface for working with the models is totally different
 
+::: {style="font-size: 80%;"}
 Details: <https://mrc-ide.github.io/odin.dust/articles/porting.html>
+:::
 
 ::: {.notes}
 
@@ -188,7 +190,7 @@ Details: <https://mrc-ide.github.io/odin.dust/articles/porting.html>
 * `delay` - these interact weirdly with stochastic processes
 :::
 
-## Supported random draws
+## Current supported distributions for random draws {.smaller}
 
 * uniform: `runif(min, max)`
 * normal: `rnorm(mean, sd)`
@@ -263,15 +265,9 @@ You must declare the dimensions of all arrays!
 
 # Running in parallel
 
-(diagram showing cpu vs walltime)
-
-(diagram showing efficiency)
-
-(idea of particles)
-
-(brief note on RNG design)
-
-(brief note on OpenMP)
+* Reduce **walltime**
+* ...but probably increase **CPU time**
+* Requires that you run multiple "particles" at once
 
 ## System requirement: OpenMP
 
@@ -329,6 +325,7 @@ Issues for builtin parallelism:
 
 * Automatic indexing with `i`, `j`, `k`
   - then `l`, `i5`, `i6`, `i7`, `i8` for dimensions 5 -- 8
+* Index comes from the loop implied by the lhs
 
 ## Adding vaccination to the model
 
@@ -354,9 +351,7 @@ update(S[, ]) <- new_S[i, j]
 * Bundle together model and support code
 * Much faster startup time
 
-## Create a package
-
-::: {.smaller}
+## Create a package {.smaller}
 
 1. Basic skeleton using `usethis::create_r_package("mymodel")`
 2. Add DSL code to `inst/odin`
@@ -364,14 +359,12 @@ update(S[, ]) <- new_S[i, j]
    - Add `cpp11` and `dust` to section `LinkingTo`
    - Add `dust` to `Imports`
    - Add `SystemRequirements: C++11`
-4. Add `#' @useDynLib sircovid, .registration = TRUE` somewhere (e.g., `R/zzz.R`)
+4. Add `#' @useDynLib mymodel, .registration = TRUE` somewhere (e.g., `R/zzz.R`)
 5. Run `odin.dust::odin_dust_package()` to generate files
 6. Run `devtools::document()` to update `NAMESPACE`
 7. Run `pkgload::load_all()` to compile and load
 
-:::
-
-## Edit a package
+## Update a package
 
 1. Edit DSL code in `inst/odin`
 2. `odin.dust::odin_dust_package()` to generate files
@@ -383,6 +376,8 @@ update(S[, ]) <- new_S[i, j]
 * Write unit tests to keep things working
 * Set up GitHub Actions to run tests automatically
 * Create a nice website with `pkgdown`
+
+Details: <https://r-pkgs.org/>
 
 # Epi: Time varying parameters
 
@@ -458,9 +453,12 @@ initial(infections_inc) <- 0
 * deterministic models from stochastic ones
 * mixed ODE/stochastic models
 
-# Resources
+# Resources {.smaller}
 
 * <https://mrc-ide.github.io/odin>
+* <https://mrc-ide.github.io/odin/articles/functions.html>
 * <https://mrc-ide.github.io/dust>
 * <https://mrc-ide.github.io/odin.dust>
 * <https://mrc-ide.github.io/odin-dust-tutorial>
+* <https://wellcomeopenresearch.org/articles/5-288>
+* <https://github.com/mrc-ide/sircovid/blob/master/inst/odin/lancelot.R>
