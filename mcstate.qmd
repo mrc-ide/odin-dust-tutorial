@@ -1,0 +1,269 @@
+---
+title: "`mcstate`"
+author: "MRC Centre for Global Infectious Disease Analysis"
+format: revealjs
+---
+
+# State space models
+
+## What is it?
+
+- A state space model (SSM) is a mathematical framework for modeling a dynamical system.
+- It is built around two processes:
+    - **state equations** that describes the evolution of some latent variables (also referred as "hidden" states) over time
+    - **observation equations** that relates the observations to the latent variables.
+
+## A diagram
+
+![State space model diagram](images/SSM.jpg)
+
+- $x_{t, 1 \leq t \leq T}$ the hidden states of the system 
+- $y_{t, 1 \leq t \leq T}$ the observations
+- $f_{\theta}$ the state transition function
+- $g_{\theta}$ the observation function
+- $t$ is often time
+- $\theta$ defines the model
+
+## Two common problems
+
+![](images/SSM.jpg)
+
+- Two common need
+  - "Filtering" i.e. estimate the hidden states $x_{t}$ from the observations $y_t$
+  - "Inference" i.e. estimate the $\theta$'s compatible with the observations $y_{t}$
+
+# mcstate
+
+- mcstate is an R package based on the SSM paradigm which aims to provide inference and filtering tools for dust models
+- it implements several main algorithms for this Particle MCMC (PMCMC), SMC^2, iterated filtering
+- this tutorial focuses on PMCMC
+
+```{r}
+gen_sir <- dust::dust_example("sir")
+```
+
+# Particle MCMC
+
+## What is Particle MCMC?
+
+- PMCMC is an algorithm which performs "filtering" and "inference"
+- A Markov Chain Monte Carlo (MCMC) method for estimating target distributions
+- MCMC explores the parameter space by moving randomly making jumps from one value to the next
+- Probability of going from point to the other is determined by the proposal distribution and the ratio of the likelihood
+- Compared with "traditional" MCMC, in PMCMC, the likelihood estimation is approximated using a "particle filter"
+- The filter generate a set of "particles" i.e. trajectories compatible with the observation
+- It uses these trajectories to compute a (marginal) likelihood that can be use by the PMCMC
+
+## Core algorithm
+
+1. **Initialisation** Start with a value $\theta_{0}$ from the parameter space
+2. **Initial SMC** Use sequential Monte Carlo to do the "filtering" and samples of potential $\{X_{t}\}_{1..N}$. Calculate the (marginal) likelihood from this using a MC estimator
+3. **Proposal** Propose a new parameter value $\theta ^*$
+4. **SMC** Calculate marginal likelihood of proposal
+5. **Metropolis-Hastings** Accept with probability $\min(1, \alpha)$ with $\alpha = \frac{p(\theta ^*)}{p(\theta_{t})} \cdot \frac{q(\theta_{t})}{q(\theta ^*)}$
+6. **Loop** Redo (3) until the number of steps is reached
+
+# Implementation
+
+- The inference tooling build for the COVID-19 model
+- Subsequently used for mpox, gonorhea, strep pneumo, malaria...
+- Less well refined than odin/dust tbh
+  - We may change and improve much of this, especially mcmc parameters
+
+## Design philosophy
+
+- provides you with low-level tools
+- more complex structures are built up from simpler objects
+  - Filter {data, model, n_particles, compare}
+  - PMCMC {parameters, filter, control}
+- little handholding
+- pretty fast though
+
+## Requirements
+
+- A time series
+- A generating model
+- A compare function
+- ...parameters to infer, but we'll cover that later
+
+## data
+
+[...show data]
+
+[...show mcstate data]
+
+## model
+
+[...show model]
+
+[...show model run]
+
+## index function
+
+[...get this working]
+
+## compare
+
+[...show maths]
+
+[...show code]
+
+![State space model diagram](images/SSM.jpg)
+
+This is the important bit, and something that is a trick to write well.
+
+## Files, from this repo
+
+- [`sir.csv`](...) - daily case information
+- [`sir.R`](...) - a simple SIR model with incidence
+- [`index.R`](...) - an index function
+- [`compare.R`](...) - a compare function
+
+
+# A particle filter
+
+```r
+filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
+                                       compare = compare, index = index)
+filter$run(pars)
+```
+
+## Particle filter marginal likelihoods are stochastic!
+
+```r
+replicate(10, filter$run(pars))
+```
+
+## Likelihood variance changes with particle number
+
+```
+filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 10,
+                                       compare = compare, index = index)
+replicate(10, filter$run(pars))
+filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 1000,
+                                       compare = compare, index = index)
+replicate(10, filter$run(pars))
+```
+
+- Monte Carlo estimations typically see variance decrease with sample size, this is no different.
+- You want a small variance, but that costs a lot of CPU time
+
+## Likelihood mean changes with parameter values
+
+[...]
+
+## Particle filter history is a tree
+
+```r
+filter$run(save_history = TRUE)
+times <- data$time_end
+h <- filter$history()
+matplot(t(h["I", , ]), type = "l", col = "#00000033")
+```
+
+[show the gif here again]
+
+  
+## Building up
+
+ 
+## Implementing the filter
+  
+```{.r}
+n_particles <- 100
+filter <- mcstate::particle_filter$new(data = sir_data,
+                                       model = gen_sir,
+                                       n_particles = n_particles,
+                                       compare = case_compare,
+                                       seed = 1L)
+```
+
+# PMCMC
+
+- Particle MCMC - like MCMC but with a particle filter
+- Slow, and hard to tune
+- Easy to generate impossibly large amounts of data
+- Inherits all the issues of MCMC that you know and love
+
+## Algorithm
+
+1. **Initialisation** Start with a value $\theta_{0}$ from the parameter space
+2. **Initial SMC** Use sequential Monte Carlo to do the "filtering" and samples of potential $\{X_{t}\}_{1..N}$. Calculate the (marginal) likelihood from this using a MC estimator
+3. **Proposal** Propose a new parameter value $\theta ^*$
+4. **SMC** Calculate marginal likelihood of proposal
+5. **Metropolis-Hastings** Accept with probability $\min(1, \alpha)$ with $\alpha = \frac{p(\theta ^*)}{p(\theta_{t})} \cdot \frac{q(\theta_{t})}{q(\theta ^*)}$
+6. **Loop** Redo (3) until the number of steps is reached
+
+## Defining your parameters
+
+* Different to particle filter/model parameters
+  - filter/model parameters are everything your model needs to run; may include data!
+  - pmcmc parameters are unstructured numeric vector
+  - the pmcmc parameters are statistical parameters, your model parameters are functional parameters
+* Requirements:
+  - priors for mcmc parameters
+  - proposal vcv for multivariate normal
+  - transformation from mcmc to model parameters
+
+## Priors
+
+## Proposal
+
+## Transformation
+
+## Running PMCMC
+
+[example]
+
+## Assessing fit
+
+* Gelman's Rubin diagnostic
+* Tune your vcv
+* All your ideas are useful but can be misleading; adaptation is hard
+
+[Marc to add some details]
+
+## Saving history
+
+## Autocorrelation
+
+[Marc to add slide on statistical issues]
+
+* variance of the samples smaller than the true distribution
+* ergodicity and iid and autocorrelation
+
+## Thinning the chain
+
+* Either before or after fit
+* Faster and less memory to thin before
+* More flexible to thin later
+* No real difference if history not saved
+
+This is useful because most of your chain is not interesting.
+
+# Intermediate topics
+
+* forward time predictions
+* posterior predictive checks
+* closures and binding data into functions
+* running in parallel - chains and particles
+* min log likelihood (and filter early exit)
+* rerun filter in mcmc
+
+# Advanced topics
+
+* compiled compare functions
+* multi-parameter models
+* multi-stage models
+* restarting models
+* deterministic (expectation) models as starting points
+* adaptive fitting (deterministic models only)
+* use on a GPU
+* use with ODE/SDE models
+* other inference methods - if2, smc2
+
+
+
+
+
+

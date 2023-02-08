@@ -1,0 +1,8 @@
+---
+title: odin, dust, mcstate and friends
+---
+
+* [introduction to `odin`, `dust` and friends](odin.html)
+* [inference with `mcstate`](mcstate.html)
+
+See [the repo](https://github.com/mrc-ide/odin-dust-tutorial) for all materials (including copies of the slides)
