@@ -6,6 +6,18 @@ format: revealjs
 
 # State space models
 
+```{r}
+r_output <- function(path, highlight = NULL) {
+  if (is.null(highlight)) {
+    prefix <- "```r"
+  } else {
+    prefix <- sprintf('```{.r code-line-numbers="%s"}', highlight)
+  }
+  writeLines(c(prefix, readLines(path), "```"))
+}
+set.seed(1) # always the same
+```
+
 ## What is it?
 
 - A state space model (SSM) is a mathematical framework for modeling a dynamical system.
@@ -28,19 +40,9 @@ format: revealjs
 
 ![](images/SSM.jpg)
 
-- Two common need
+- Two common needs
   - "Filtering" i.e. estimate the hidden states $x_{t}$ from the observations $y_t$
   - "Inference" i.e. estimate the $\theta$'s compatible with the observations $y_{t}$
-
-# mcstate
-
-- mcstate is an R package based on the SSM paradigm which aims to provide inference and filtering tools for dust models
-- it implements several main algorithms for this Particle MCMC (PMCMC), SMC^2, iterated filtering
-- this tutorial focuses on PMCMC
-
-```{r}
-gen_sir <- dust::dust_example("sir")
-```
 
 # Particle MCMC
 
@@ -63,40 +65,75 @@ gen_sir <- dust::dust_example("sir")
 5. **Metropolis-Hastings** Accept with probability $\min(1, \alpha)$ with $\alpha = \frac{p(\theta ^*)}{p(\theta_{t})} \cdot \frac{q(\theta_{t})}{q(\theta ^*)}$
 6. **Loop** Redo (3) until the number of steps is reached
 
-# Implementation
+# mcstate
 
-- The inference tooling build for the COVID-19 model
+- mcstate is an R package based on the SSM paradigm which aims to provide inference and filtering tools for dust models
+- it implements several main algorithms for this Particle MCMC (PMCMC), SMC^2, iterated filtering
+- the inference tooling for the Centre's UK covid model
 - Subsequently used for mpox, gonorhea, strep pneumo, malaria...
-- Less well refined than odin/dust tbh
-  - We may change and improve much of this, especially mcmc parameters
 
 ## Design philosophy
 
-- provides you with low-level tools
+- Less well refined than odin/dust tbh
+  - We may change and improve much of this, especially mcmc parameters
 - more complex structures are built up from simpler objects
   - Filter {data, model, n_particles, compare}
   - PMCMC {parameters, filter, control}
-- little handholding
+- provides you with low-level tools, and little handholding
 - pretty fast though
 
-## Requirements
+# Particle filtering
+
+Our requirements
 
 - A time series
 - A generating model
+- An index into model state
 - A compare function
-- ...parameters to infer, but we'll cover that later
+
+(for PMCMC you also need parameters to infer, ...later)
 
 ## data
 
-[...show data]
+```r
+#| echo = TRUE
+incidence <- read.csv("data/incidence.csv")
+head(incidence)
+plot(cases ~ day, incidence, pch = 19, las = 1)
+```
 
-[...show mcstate data]
+```r
+#| echo = TRUE
+data <- mcstate::particle_filter_data(incidence, time = "day", rate = 4, initial_time = 0)
+head(data)
+```
 
 ## model
 
-[...show model]
+```{r}
+#| results: "asis"
+r_output("models/sir.R")
+```
 
-[...show model run]
+or
+
+```{r}
+#| echo = TRUE
+sir <- odin.dust::odin_dust("models/sir.R")
+```
+
+## The model over time
+
+```{r}
+pars <- list(beta = 0.25, gamma = 0.1, freq = 4)
+mod <- sir$new(pars, 0, 20)
+y <- mod$simulate(c(0, data$time_end))
+i <- mod$info()$index[["time"]]
+j <- mod$info()$index[["cases_inc"]]
+matplot(y[i, 1, ], t(y[j, , ]), type = "l", col = "#00000055", lty = 1, las = 1,
+        xlab = "Day", ylab = "Cases")
+points(cases ~ day, incidence, col = "red", pch = 19)
+```
 
 ## index function
 
