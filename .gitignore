@@ -1,5 +1,5 @@
-slides.html
-slides_files/
+*.html
+*_files/
 
 /.quarto/
 site
