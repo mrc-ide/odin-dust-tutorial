@@ -49,7 +49,9 @@ knitr::knit_hooks$set(small_margins = function(before, options, envir) {
   - "Filtering" i.e. estimate the hidden states $x_{t}$ from the observations $y_t$
   - "Inference" i.e. estimate the $\theta$'s compatible with the observations $y_{t}$
 
-# (Bootstrap) Sequential Monte Carlo (the particle filter) {.smaller}
+# (Bootstrap) Sequential Monte Carlo {.smaller}
+
+AKA, the particle filter
 
 - Assuming a given $\theta$, at each time step $t$, BSSMC:
   1. generates $X_{t+1}^N$ by using $f_{\theta}(X_{t+1}^N|X_{t}^N)$ (the $N$ particles)
