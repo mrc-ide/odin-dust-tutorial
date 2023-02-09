@@ -25,7 +25,7 @@ knitr::knit_hooks$set(small_margins = function(before, options, envir) {
 
 ## What is it?
 
-- A state space model (SSM) is a mathematical framework for modeling a dynamical system.
+- A state space model (SSM) is a mathematical framework for modelling a dynamical system.
 - It is built around two processes:
     - **state equations** that describes the evolution of some latent variables (also referred as "hidden" states) over time
     - **observation equations** that relates the observations to the latent variables.
@@ -85,13 +85,13 @@ knitr::knit_hooks$set(small_margins = function(before, options, envir) {
 
 - `mcstate` is an R package based on the SSM paradigm which aims to provide inference and filtering tools for dust models
 - Implements several main algorithms for this Particle MCMC (PMCMC), SMC^2, iterated filtering
-- Inference tooling for the Centre's UK covid model
+- Inference tooling for the Centre's UK COVID model
 - Subsequently used for other diseases
 
 ## Design philosophy
 
 - Less well refined than odin/dust tbh
-  - We may change and improve much of this, especially mcmc parameters
+  - We may change and improve much of this, especially MCMC parameters
 - More complex structures are built up from simpler objects
   - Filter {data, model, n_particles, compare}
   - PMCMC {parameters, filter, control}
@@ -290,12 +290,12 @@ matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011",
 
 * Different to particle filter/model parameters
   - filter/model parameters are everything your model needs to run; may include data!
-  - pmcmc parameters (often called $\theta$) are unstructured numeric vector
-  - the pmcmc parameters are statistical parameters, your model parameters are functional parameters
+  - PMCMC parameters (often called $\theta$) are unstructured numeric vector
+  - the PMCMC parameters are statistical parameters, your model parameters are functional parameters
 * Requirements:
-  - priors for mcmc parameters
-  - proposal vcv for multivariate normal
-  - transformation from mcmc to model parameters
+  - priors for MCMC parameters
+  - proposal CV for multivariate normal
+  - transformation from MCMC to model parameters
 
 ## Priors
 
@@ -322,7 +322,7 @@ vcv
 
 ## Transformation
 
-Convert "mcmc parameters" into "model parameters"
+Convert "MCMC parameters" into "model parameters"
 
 ```{r}
 #| echo: TRUE
@@ -336,7 +336,7 @@ You will want closures in complex models:
 ```r
 make_transform <- function(contact_matrix, vaccine_schedule) {
   function(theta) {
-    list(contact_matrix = contaxt_matrix,
+    list(contact_matrix = contact_matrix,
          vaccine_schedule = vaccine_schedule,
          beta = theta[["beta"]],
          gamma = theta[["gamma"]])
@@ -377,7 +377,8 @@ oh.
   - Run multiple chain
   - Check than within-chain variance is similar to between-chain variance
   - Necessary but not sufficient to prove convergence
-* A lot of problems in MCMC comes from autocorrelation
+* A lot of problems in MCMC come from autocorrelation
+* Gelman Rubin diagnostic
 
 ## Autocorrelation
 
@@ -410,7 +411,7 @@ Arguments to  [`mcstate::pmcmc_control`](https://mrc-ide.github.io/mcstate/refer
 * `n_chains`: number of separate chains to run
 * `n_threads_total`: total number of threads to use
 * `n_workers`: number of separate threads to split your chains over
-* `use_parallel_seed`: helps with reproducubility
+* `use_parallel_seed`: helps with reproducibility
 
 You can also run different chains on different cluster nodes - but talk to us about this.
 
@@ -470,3 +471,14 @@ The reference paper on PMCMC
 
 A software oriented paper introducing odin, dust and mcstate
 [R. G. FitzJohn et al. Reproducible parallel inference and simulation of stochastic state space models using odin, dust, and mcstate. Wellcome Open Res. 2021 5288 5, 288 (2021).](https://wellcomeopenresearch.org/articles/5-288)
+
+<!--  LocalWords:  mcstate revealjs sprintf writeLines readLines SSM
+ -->
+<!--  LocalWords:  envir leq BSSMC Resample propto MCMC PMCMC SMC tbh
+ -->
+<!--  LocalWords:  frac cdot handholding csv pch las asis matplot lty
+ -->
+<!--  LocalWords:  xlab ylab rexp dpois repo infecteds dgamma vcv ESS
+ -->
+<!--  LocalWords:  diag mcmc Gelman SDE
+ -->
