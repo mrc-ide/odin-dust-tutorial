@@ -1,17 +1,13 @@
 #!/bin/bash
 set -eu
-SITE_DIR=site
+SITE_DIR=_site
 
 VERSION=$(git rev-parse --short HEAD)
 REMOTE_URL=$(git config --get remote.origin.url)
 
-rm -rf ${SITE_DIR}
-mkdir -p ${SITE_DIR}
-cp -r slides_files $SITE_DIR
-cp slides.html $SITE_DIR/index.html
+rm -rf ${SITE_DIR}/.git
 touch $SITE_DIR/.nojekyll
 
-rm -rf ${SITE_DIR}/.git
 git init ${SITE_DIR}
 git -C ${SITE_DIR} checkout --orphan gh-pages
 git -C ${SITE_DIR} add .
