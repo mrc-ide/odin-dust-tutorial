@@ -4,3 +4,4 @@
 /.quarto/
 site
 _site
+.Rproj.user
