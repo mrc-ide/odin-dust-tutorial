@@ -16,6 +16,11 @@ r_output <- function(path, highlight = NULL) {
   writeLines(c(prefix, readLines(path), "```"))
 }
 set.seed(1) # always the same
+knitr::knit_hooks$set(small_margins = function(before, options, envir) {
+  if (before) {
+    par(mar = c(4, 4, .1, .1))
+  }
+})
 ```
 
 ## What is it?
@@ -25,9 +30,9 @@ set.seed(1) # always the same
     - **state equations** that describes the evolution of some latent variables (also referred as "hidden" states) over time
     - **observation equations** that relates the observations to the latent variables.
 
-## A diagram
+## Can you be more precise?
 
-![State space model diagram](images/SSM.jpg)
+![](images/SSM.jpg)
 
 - $x_{t, 1 \leq t \leq T}$ the hidden states of the system 
 - $y_{t, 1 \leq t \leq T}$ the observations
@@ -46,7 +51,7 @@ set.seed(1) # always the same
 
 # Particle MCMC
 
-## What is Particle MCMC?
+## What is Particle MCMC? {.smaller}
 
 - PMCMC is an algorithm which performs "filtering" and "inference"
 - A Markov Chain Monte Carlo (MCMC) method for estimating target distributions
@@ -67,20 +72,20 @@ set.seed(1) # always the same
 
 # mcstate
 
-- mcstate is an R package based on the SSM paradigm which aims to provide inference and filtering tools for dust models
-- it implements several main algorithms for this Particle MCMC (PMCMC), SMC^2, iterated filtering
-- the inference tooling for the Centre's UK covid model
-- Subsequently used for mpox, gonorhea, strep pneumo, malaria...
+- `mcstate` is an R package based on the SSM paradigm which aims to provide inference and filtering tools for dust models
+- Implements several main algorithms for this Particle MCMC (PMCMC), SMC^2, iterated filtering
+- Inference tooling for the Centre's UK covid model
+- Subsequently used for other diseases
 
 ## Design philosophy
 
 - Less well refined than odin/dust tbh
   - We may change and improve much of this, especially mcmc parameters
-- more complex structures are built up from simpler objects
+- More complex structures are built up from simpler objects
   - Filter {data, model, n_particles, compare}
   - PMCMC {parameters, filter, control}
-- provides you with low-level tools, and little handholding
-- pretty fast though
+- Provides you with low-level tools, and little handholding
+- Pretty fast though
 
 # Particle filtering
 
@@ -93,39 +98,45 @@ Our requirements
 
 (for PMCMC you also need parameters to infer, ...later)
 
-## data
+## The data
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
+#| small_margins: TRUE
 incidence <- read.csv("data/incidence.csv")
 head(incidence)
 plot(cases ~ day, incidence, pch = 19, las = 1)
 ```
 
+## Data preparation
+
 ```{r}
-#| echo = TRUE
-data <- mcstate::particle_filter_data(incidence, time = "day", rate = 4, initial_time = 0)
+#| echo: TRUE
+data <- mcstate::particle_filter_data(
+  incidence, time = "day", rate = 4, initial_time = 0)
 head(data)
 ```
 
-## model
+## The model
 
 ```{r}
 #| results: "asis"
 r_output("models/sir.R")
 ```
 
-or
+## Compiling the model
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 sir <- odin.dust::odin_dust("models/sir.R")
 ```
 
 ## The model over time
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
+#| small_margins: TRUE
+#| code-line-numbers: "|4-5"
 pars <- list(beta = 0.25, gamma = 0.1)
 mod <- sir$new(pars, 0, 20)
 y <- mod$simulate(c(0, data$time_end))
@@ -136,13 +147,13 @@ matplot(y[i, 1, ], t(y[j, , ]), type = "l", col = "#00000055", lty = 1, las = 1,
 points(cases ~ day, incidence, col = "red", pch = 19)
 ```
 
-## index function
+## The index function
 
 * You rarely care about all variables
-* You might want different variables for your compare and for plotting
+* Different variables for compare and for plotting
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 index <- function(info) {
   list(run = c(incidence = info$index$cases_inc),
        state = c(t = info$index$time,
@@ -152,25 +163,17 @@ index <- function(info) {
 index(mod$info())
 ```
 
-## compare
+## The compare function
 
-![State space model diagram](images/SSM.jpg)
+![](images/SSM.jpg)
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 compare <- function(state, observed, pars = NULL) {
   modelled <- state["incidence", , drop = TRUE]
   lambda <- modelled + rexp(length(modelled), 1e6)
   dpois(observed$cases, lambda, log = TRUE)
 }
-```
-
-given
-
-```{r}
-#| echo = TRUE
-index
-head(data)
 ```
 
 This is the important bit, and something that is a trick to write well.
@@ -187,7 +190,7 @@ Or browse <https://github.com/mrc-ide/odin-dust-tutorial>
 # A particle filter
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
                                        compare = compare, index = index)
 pars <- list(beta = 0.25, gamma = 0.1)
@@ -197,14 +200,14 @@ filter$run(pars)
 ## Particle filter marginal likelihoods are stochastic!
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 replicate(10, filter$run(pars))
 ```
 
 ## Likelihood variance changes with particle number
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 10,
                                        compare = compare, index = index)
 sort(replicate(10, filter$run(pars)))
@@ -218,15 +221,28 @@ sort(replicate(10, filter$run(pars)))
 
 ## Likelihood mean changes with parameter values
 
-[...]
+```{r}
+#| echo: TRUE
+filter$run(list(beta = 0.2, gamma = 0.1))
+filter$run(list(beta = 0.1, gamma = 0.05))
+```
+
+## Particle filter history
+
+First, run the filter while saving history (off by default)
+
+```{r}
+#| echo: TRUE
+filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
+                                       compare = compare, index = index)
+filter$run(save_history = TRUE)
+```
 
 ## Particle filter history is a tree
 
 ```{r}
-#| echo = TRUE
-filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
-                                       compare = compare, index = index)
-filter$run(save_history = TRUE)
+#| echo: TRUE
+#| small_margins: TRUE
 times <- data$time_end
 h <- filter$history()
 matplot(h["t", 1, ], t(h["cases", , ]), type = "l", col = "#00000011", 
@@ -234,8 +250,11 @@ matplot(h["t", 1, ], t(h["cases", , ]), type = "l", col = "#00000011",
 points(cases ~ day, incidence, pch = 19, col = "red")
 ```
 
+## Particle filter history for unobserved states
+
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
+#| small_margins: TRUE
 matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011", 
         xlab = "Day", ylab = "Number of infecteds (I)", las = 1)
 ```
@@ -270,7 +289,7 @@ matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011",
 ## Priors
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 priors <- list(
   mcstate::pmcmc_parameter("beta", 0.2, min = 0),
   mcstate::pmcmc_parameter("gamma", 0.1, min = 0, prior = function(p)
@@ -285,7 +304,7 @@ priors <- list(
 * Symmetric (except for reflections at any provided boundaries)
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 vcv <- diag(0.1, 2)
 vcv
 ```
@@ -295,7 +314,7 @@ vcv
 Convert "mcmc parameters" into "model parameters"
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 transform <- function(theta) {
   as.list(theta)
 }
@@ -318,14 +337,14 @@ transform <- make_transform(contact_matrix, vaccine_schedule)
 ## Final parameter object
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)
 ```
 
 ## Running PMCMC
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 control <- mcstate::pmcmc_control(
     n_steps = 100,
     save_state = TRUE,
@@ -369,7 +388,7 @@ This is useful because most of your chain is not interesting due to the autocorr
 ## Plotting your chains
 
 ```{r}
-#| echo = TRUE
+#| echo: TRUE
 samples$probabilities[, "log_posterior"]
 ```
 
@@ -400,7 +419,7 @@ samples$probabilities[, "log_posterior"]
 * use with ODE/SDE models
 * other inference methods - if2, smc2
 
-# Resources
+# Resources {.smaller}
 
 A nice PMCMC introduction written for the epidemiologist
 [Endo, A., van Leeuwen, E. & Baguelin, M. Introduction to particle Markov-chain Monte Carlo for disease dynamics modellers. Epidemics 29, 100363 (2019).] (https://www.sciencedirect.com/science/article/pii/S1755436519300301?via%3Dihub)
