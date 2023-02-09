@@ -1,0 +1,513 @@
+[
+  {
+    "objectID": "blurb/odin.html",
+    "href": "blurb/odin.html",
+    "title": "odin etc",
+    "section": "",
+    "text": "This Thursday afternoon (from 15:30, Bannister lecture theatre), we will be running the next departmental training session “Introduction to odin and dust”. This workshop is aimed at anyone who wants to use these tools to build compartmental models, particularly stochastic compartmental models.\nThe focus is going to be on stochastic models with dust - how they differ from the original odin version of these models, and how to make them run really fast. People who have used already odin with continuous time models are particularly welcome but no previous experience will be assumed.\nThis will be an interactive in-person workshop with floating helpers, so it’s really important to try and bring along a laptop with prerequisites installed, so that by the end of the workshop you should be able to run everything yourself.\nThis workshop will lead into the following week’s workshop (introduction to mcstate); if you’re planning on going to that one, please try and come along to this one.\nInstall required packages, by running these commands in a fresh R session:\noptions(repos = c(\n  mrcide = 'https://mrc-ide.r-universe.dev',\n  CRAN = 'https://cloud.r-project.org'))\ninstall.packages(c(\"odin\", \"dust\", \"odin.dust\"))\nYou also need to have a working C++ toolchain. If you use stan already there’s a good chance that you already have one and you should probably avoid fiddling around with it unnecessarily as stan tends to be awfully fussy about settings.\nYou can check if you are set up ok by running:\npkgbuild::check_build_tools(TRUE)\nIf you run this from Rstudio and tools are not available, apparently this function will help you install the compiler. To install the tools manually:\n\non windows follow instructions from https://cran.r-project.org/bin/windows/Rtools/rtools40.html - be sure to select the “edit PATH” checkbox during installation or the tools will not be found.\non mac: follow instructions from: https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites\n\nIn both cases, restart R and check that Then restart R, and check that pkgbuild::check_build_tools(TRUE) reports that everything is ok.\nWe will share links to code via the DIDE Training Series team channel. In Teams, check your list of Teams, look for “DIDE Training Series - WP”, select the bit that says “13 hidden channels” or similar, and next to “2nd Feb 2023 - odin and odi…” click “Show” to display the channel in your sidebar."
+  },
+  {
+    "objectID": "blurb/mcstate.html",
+    "href": "blurb/mcstate.html",
+    "title": "odin etc",
+    "section": "",
+    "text": "This Thursday afternoon (from 15:30, Praed St meeting room), we will be running the next departmental training session “Introduction to mcstate”. This workshop is aimed at anyone who wants to perform inference with stochastic compartmental models written in odin. We will show how to use a particle filter with these models and your data, and then run a particle mcmc with this.\nThis will be an interactive in-person workshop with floating helpers, so it’s really important to try and bring along a laptop with prerequisites installed, so that by the end of the workshop you should be able to run everything yourself.\nThis workshop follows from last week’s workshop (introduction to odin and dust), but we’ll cover the basics even if you were unable to make that session.\nInstall required packages, by running these commands in a fresh R session:\noptions(repos = c(\n  mrcide = 'https://mrc-ide.r-universe.dev',\n  CRAN = 'https://cloud.r-project.org'))\ninstall.packages(c(\"odin\", \"dust\", \"odin.dust\", \"mcstate\"))\nYou also need to have a working C++ toolchain. If you use stan already there’s a good chance that you already have one and you should probably avoid fiddling around with it unnecessarily as stan tends to be awfully fussy about settings.\nYou can check if you are set up ok by running:\npkgbuild::check_build_tools(TRUE)\nIf you run this from Rstudio and tools are not available, apparently this function will help you install the compiler. To install the tools manually:\n\non windows follow instructions from https://cran.r-project.org/bin/windows/Rtools/rtools40.html - be sure to select the “edit PATH” checkbox during installation or the tools will not be found.\non mac: follow instructions from: https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites\n\nIn both cases, restart R and check that Then restart R, and check that pkgbuild::check_build_tools(TRUE) reports that everything is ok.\nWe will share links to code via the DIDE Training Series team channel. In Teams, check your list of Teams, look for “DIDE Training Series - WP”, select the bit that says “13 hidden channels” or similar, and next to “9th Feb 2023 - MCState by…” click “Show” to display the channel in your sidebar."
+  },
+  {
+    "objectID": "mcstate.html#what-is-it",
+    "href": "mcstate.html#what-is-it",
+    "title": "mcstate",
+    "section": "What is it?",
+    "text": "What is it?\n\nA state space model (SSM) is a mathematical framework for modelling a dynamical system.\nIt is built around two processes:\n\nstate equations that describes the evolution of some latent variables (also referred as “hidden” states) over time\nobservation equations that relates the observations to the latent variables."
+  },
+  {
+    "objectID": "mcstate.html#can-you-be-more-precise",
+    "href": "mcstate.html#can-you-be-more-precise",
+    "title": "mcstate",
+    "section": "Can you be more precise?",
+    "text": "Can you be more precise?\n\n\n\\(x_{t, 1 \\leq t \\leq T}\\) the hidden states of the system\n\\(y_{t, 1 \\leq t \\leq T}\\) the observations\n\\(f_{\\theta}\\) the state transition function\n\\(g_{\\theta}\\) the observation function\n\\(t\\) is often time\n\\(\\theta\\) defines the model"
+  },
+  {
+    "objectID": "mcstate.html#two-common-problems",
+    "href": "mcstate.html#two-common-problems",
+    "title": "mcstate",
+    "section": "Two common problems",
+    "text": "Two common problems\n\n\nTwo common needs\n\n“Filtering” i.e. estimate the hidden states \\(x_{t}\\) from the observations \\(y_t\\)\n“Inference” i.e. estimate the \\(\\theta\\)’s compatible with the observations \\(y_{t}\\)"
+  },
+  {
+    "objectID": "mcstate.html#what-is-particle-mcmc",
+    "href": "mcstate.html#what-is-particle-mcmc",
+    "title": "mcstate",
+    "section": "What is Particle MCMC?",
+    "text": "What is Particle MCMC?\n\nPMCMC is an algorithm which performs “filtering” and “inference”\nA Markov Chain Monte Carlo (MCMC) method for estimating target distributions\nMCMC explores the parameter space by moving randomly making jumps from one value to the next\nProbability of going from point to the other is determined by the proposal distribution and the ratio of the likelihood\nCompared with “traditional” MCMC, in PMCMC, the likelihood estimation is approximated using a “particle filter”\nThe filter generates a set of “particles” i.e. trajectories compatible with the observation\nIt uses these trajectories to compute a (marginal) likelihood that can be use by the PMCMC"
+  },
+  {
+    "objectID": "mcstate.html#core-algorithm",
+    "href": "mcstate.html#core-algorithm",
+    "title": "mcstate",
+    "section": "Core algorithm",
+    "text": "Core algorithm\n\nInitialisation Start with a value \\(\\theta_{0}\\) from the parameter space\nInitial SMC Use sequential Monte Carlo to do the “filtering” and samples of potential \\(\\{X_{t}\\}_{1..N}\\). Calculate the (marginal) likelihood from this using a MC estimator\nProposal Propose a new parameter value \\(\\theta ^*\\)\nSMC Calculate marginal likelihood of proposal\nMetropolis-Hastings Accept with probability \\(\\min(1, \\alpha)\\) with \\(\\alpha = \\frac{p(\\theta ^*)}{p(\\theta_{t})} \\cdot \\frac{q(\\theta_{t})}{q(\\theta ^*)}\\)\nLoop Redo (3) until the number of steps is reached"
+  },
+  {
+    "objectID": "mcstate.html#design-philosophy",
+    "href": "mcstate.html#design-philosophy",
+    "title": "mcstate",
+    "section": "Design philosophy",
+    "text": "Design philosophy\n\nLess well refined than odin/dust tbh\n\nWe may change and improve much of this, especially MCMC parameters\n\nMore complex structures are built up from simpler objects\n\nFilter {data, model, n_particles, compare}\nPMCMC {parameters, filter, control}\n\nProvides you with low-level tools, and little handholding\nPretty fast though"
+  },
+  {
+    "objectID": "mcstate.html#data",
+    "href": "mcstate.html#data",
+    "title": "mcstate",
+    "section": "data",
+    "text": "data\n\nincidence <- read.csv(\"data/incidence.csv\")\nhead(incidence)\n\n  cases day\n1     3   1\n2     2   2\n3     2   3\n4     2   4\n5     1   5\n6     3   6\n\nplot(cases ~ day, incidence, pch = 19, las = 1)\n\n\n\ndata <- mcstate::particle_filter_data(incidence, time = \"day\", rate = 4, initial_time = 0)\nhead(data)\n\n  day_start day_end time_start time_end cases\n1         0       1          0        4     3\n2         1       2          4        8     2\n3         2       3          8       12     2\n4         3       4         12       16     2\n5         4       5         16       20     1\n6         5       6         20       24     3"
+  },
+  {
+    "objectID": "mcstate.html#model",
+    "href": "mcstate.html#model",
+    "title": "mcstate",
+    "section": "model",
+    "text": "model\n\nN <- S + I + R\np_SI <- 1 - exp(-(beta) * I / N)\np_IR <- 1 - exp(-(gamma))\nn_IR <- rbinom(I, p_IR * dt)\nn_SI <- rbinom(S, p_SI * dt)\n\nupdate(time) <- (step + 1) * dt\nupdate(S) <- S - n_SI\nupdate(I) <- I + n_SI - n_IR\nupdate(R) <- R + n_IR\nupdate(cases_cumul) <- cases_cumul + n_SI\nupdate(cases_inc) <- if (step %% freq == 0) n_SI else cases_inc + n_SI\n\ninitial(time) <- 0\ninitial(S) <- 1000\ninitial(R) <- 0\ninitial(I) <- I0\ninitial(cases_cumul) <- 0\ninitial(cases_inc) <- 0\n\nbeta <- user(0.2)\ngamma <- user(0.1)\nI0 <- user(10)\n\nfreq <- user(4)\ndt <- 1.0 / freq\n\nor\n\nsir <- odin.dust::odin_dust(\"models/sir.R\")\n\n* installing *source* package ‘sira5d4bd1a’ ...\n** using staged installation\n** libs\ng++ -std=gnu++11 -I\"/usr/share/R/include\" -DNDEBUG  -I'/home/rfitzjoh/lib/R/library/cpp11/include' -g -Wall -Wextra -pedantic -Wmaybe-uninitialized -Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers -O2  -I/home/rfitzjoh/lib/R/library/dust/include -DHAVE_INLINE -fopenmp -fpic  -g -O2 -fdebug-prefix-map=/build/r-base-a3XuZ5/r-base-4.2.2.20221110=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2  -c cpp11.cpp -o cpp11.o\ng++ -std=gnu++11 -I\"/usr/share/R/include\" -DNDEBUG  -I'/home/rfitzjoh/lib/R/library/cpp11/include' -g -Wall -Wextra -pedantic -Wmaybe-uninitialized -Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers -O2  -I/home/rfitzjoh/lib/R/library/dust/include -DHAVE_INLINE -fopenmp -fpic  -g -O2 -fdebug-prefix-map=/build/r-base-a3XuZ5/r-base-4.2.2.20221110=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2  -c dust.cpp -o dust.o\ng++ -std=gnu++11 -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o sira5d4bd1a.so cpp11.o dust.o -fopenmp -L/usr/lib/R/lib -lR\ninstalling to /tmp/Rtmp9KqYbH/devtools_install_24eb2fd52060/00LOCK-file24eb2f664f2dc1/00new/sira5d4bd1a/libs\n** checking absolute paths in shared objects and dynamic libraries\n* DONE (sira5d4bd1a)"
+  },
+  {
+    "objectID": "mcstate.html#the-model-over-time",
+    "href": "mcstate.html#the-model-over-time",
+    "title": "mcstate",
+    "section": "The model over time",
+    "text": "The model over time\n\npars <- list(beta = 0.25, gamma = 0.1)\nmod <- sir$new(pars, 0, 20)\ny <- mod$simulate(c(0, data$time_end))\ni <- mod$info()$index[[\"time\"]]\nj <- mod$info()$index[[\"cases_inc\"]]\nmatplot(y[i, 1, ], t(y[j, , ]), type = \"l\", col = \"#00000055\", lty = 1, las = 1,\n        xlab = \"Day\", ylab = \"Cases\")\npoints(cases ~ day, incidence, col = \"red\", pch = 19)"
+  },
+  {
+    "objectID": "mcstate.html#index-function",
+    "href": "mcstate.html#index-function",
+    "title": "mcstate",
+    "section": "index function",
+    "text": "index function\n\nYou rarely care about all variables\nDifferent variables for compare and for plotting\n\n\nindex <- function(info) {\n  list(run = c(incidence = info$index$cases_inc),\n       state = c(t = info$index$time,\n                 I = info$index$I,\n                 cases = info$index$cases_inc))\n}\nindex(mod$info())\n\n$run\nincidence \n        6 \n\n$state\n    t     I cases \n    1     4     6"
+  },
+  {
+    "objectID": "mcstate.html#compare",
+    "href": "mcstate.html#compare",
+    "title": "mcstate",
+    "section": "compare",
+    "text": "compare\n\n\ncompare <- function(state, observed, pars = NULL) {\n  modelled <- state[\"incidence\", , drop = TRUE]\n  lambda <- modelled + rexp(length(modelled), 1e6)\n  dpois(observed$cases, lambda, log = TRUE)\n}\n\ngiven\n\nindex\n\nfunction(info) {\n  list(run = c(incidence = info$index$cases_inc),\n       state = c(t = info$index$time,\n                 I = info$index$I,\n                 cases = info$index$cases_inc))\n}\n\nhead(data)\n\n  day_start day_end time_start time_end cases\n1         0       1          0        4     3\n2         1       2          4        8     2\n3         2       3          8       12     2\n4         3       4         12       16     2\n5         4       5         16       20     1\n6         5       6         20       24     3\n\n\nThis is the important bit, and something that is a trick to write well."
+  },
+  {
+    "objectID": "mcstate.html#files-from-this-repo",
+    "href": "mcstate.html#files-from-this-repo",
+    "title": "mcstate",
+    "section": "Files, from this repo",
+    "text": "Files, from this repo\n\nincidence.csv - daily case information\nsir.R - a simple SIR model with incidence\nindex.R - an index function\ncompare.R - a compare function\n\nOr browse https://github.com/mrc-ide/odin-dust-tutorial"
+  },
+  {
+    "objectID": "mcstate.html#particle-filter-marginal-likelihoods-are-stochastic",
+    "href": "mcstate.html#particle-filter-marginal-likelihoods-are-stochastic",
+    "title": "mcstate",
+    "section": "Particle filter marginal likelihoods are stochastic!",
+    "text": "Particle filter marginal likelihoods are stochastic!\n\nreplicate(10, filter$run(pars))\n\n [1] -253.7651 -259.2582 -252.1231 -256.0436 -255.1916 -256.1607 -255.2386\n [8] -257.6765 -254.6032 -254.3471"
+  },
+  {
+    "objectID": "mcstate.html#likelihood-variance-changes-with-particle-number",
+    "href": "mcstate.html#likelihood-variance-changes-with-particle-number",
+    "title": "mcstate",
+    "section": "Likelihood variance changes with particle number",
+    "text": "Likelihood variance changes with particle number\n\nfilter <- mcstate::particle_filter$new(data, model = sir, n_particles = 10,\n                                       compare = compare, index = index)\nsort(replicate(10, filter$run(pars)))\n\n [1] -267.1850 -263.6292 -262.8457 -261.7034 -259.9648 -259.5186 -258.7828\n [8] -258.0611 -254.4378 -251.7591\n\nfilter <- mcstate::particle_filter$new(data, model = sir, n_particles = 1000,\n                                       compare = compare, index = index)\nsort(replicate(10, filter$run(pars)))\n\n [1] -255.4523 -255.2030 -254.2859 -254.2029 -254.1420 -254.1420 -253.9215\n [8] -253.8245 -253.6417 -253.6241\n\n\n\nMonte Carlo estimations typically see variance decrease with sample size, this is no different.\nYou want a small variance, but that costs a lot of CPU time"
+  },
+  {
+    "objectID": "mcstate.html#likelihood-mean-changes-with-parameter-values",
+    "href": "mcstate.html#likelihood-mean-changes-with-parameter-values",
+    "title": "mcstate",
+    "section": "Likelihood mean changes with parameter values",
+    "text": "Likelihood mean changes with parameter values\n\nfilter$run(list(beta = 0.2, gamma = 0.1))\n\n[1] -244.3733\n\nfilter$run(list(beta = 0.1, gamma = 0.05))\n\n[1] -269.7547"
+  },
+  {
+    "objectID": "mcstate.html#particle-filter-history-is-a-tree",
+    "href": "mcstate.html#particle-filter-history-is-a-tree",
+    "title": "mcstate",
+    "section": "Particle filter history is a tree",
+    "text": "Particle filter history is a tree\n\ntimes <- data$time_end\nh <- filter$history()\nmatplot(h[\"t\", 1, ], t(h[\"cases\", , ]), type = \"l\", col = \"#00000011\", \n        xlab = \"Day\", ylab = \"Cases\", las = 1)\npoints(cases ~ day, incidence, pch = 19, col = \"red\")"
+  },
+  {
+    "objectID": "mcstate.html#algorithm",
+    "href": "mcstate.html#algorithm",
+    "title": "mcstate",
+    "section": "Algorithm",
+    "text": "Algorithm\n\nInitialisation Start with a value \\(\\theta_{0}\\) from the parameter space\nInitial SMC Use sequential Monte Carlo to do the “filtering” and samples of potential \\(\\{X_{t}\\}_{1..N}\\). Calculate the (marginal) likelihood from this using a MC estimator\nProposal Propose a new parameter value \\(\\theta ^*\\)\nSMC Calculate marginal likelihood of proposal\nMetropolis-Hastings Accept with probability \\(\\min(1, \\alpha)\\) with \\(\\alpha = \\frac{p(\\theta ^*)}{p(\\theta_{t})} \\cdot \\frac{q(\\theta_{t})}{q(\\theta ^*)}\\)\nLoop Redo (3) until the number of steps is reached"
+  },
+  {
+    "objectID": "mcstate.html#defining-your-parameters",
+    "href": "mcstate.html#defining-your-parameters",
+    "title": "mcstate",
+    "section": "Defining your parameters",
+    "text": "Defining your parameters\n\nDifferent to particle filter/model parameters\n\nfilter/model parameters are everything your model needs to run; may include data!\nPMCMC parameters (often called \\(\\theta\\)) are unstructured numeric vector\nthe PMCMC parameters are statistical parameters, your model parameters are functional parameters\n\nRequirements:\n\npriors for MCMC parameters\nproposal CV for multivariate normal\ntransformation from MCMC to model parameters"
+  },
+  {
+    "objectID": "mcstate.html#priors",
+    "href": "mcstate.html#priors",
+    "title": "mcstate",
+    "section": "Priors",
+    "text": "Priors\n\npriors <- list(\n  mcstate::pmcmc_parameter(\"beta\", 0.2, min = 0),\n  mcstate::pmcmc_parameter(\"gamma\", 0.1, min = 0, prior = function(p)\n    dgamma(p, shape = 1, scale = 0.2, log = TRUE)))\n\n(this will improve in future, feedback very welcome)"
+  },
+  {
+    "objectID": "mcstate.html#proposal",
+    "href": "mcstate.html#proposal",
+    "title": "mcstate",
+    "section": "Proposal",
+    "text": "Proposal\n\nVariance covariance matrix for a multivariate normal distribution\nSymmetric (except for reflections at any provided boundaries)\n\n\nvcv <- diag(0.01, 2)\nvcv\n\n     [,1] [,2]\n[1,] 0.01 0.00\n[2,] 0.00 0.01"
+  },
+  {
+    "objectID": "mcstate.html#transformation",
+    "href": "mcstate.html#transformation",
+    "title": "mcstate",
+    "section": "Transformation",
+    "text": "Transformation\nConvert “MCMC parameters” into “model parameters”\n\ntransform <- function(theta) {\n  as.list(theta)\n}\n\nYou will want closures in complex models:\nmake_transform <- function(contact_matrix, vaccine_schedule) {\n  function(theta) {\n    list(contact_matrix = contact_matrix,\n         vaccine_schedule = vaccine_schedule,\n         beta = theta[[\"beta\"]],\n         gamma = theta[[\"gamma\"]])\n  }\n}\ntransform <- make_transform(contact_matrix, vaccine_schedule)"
+  },
+  {
+    "objectID": "mcstate.html#final-parameter-object",
+    "href": "mcstate.html#final-parameter-object",
+    "title": "mcstate",
+    "section": "Final parameter object",
+    "text": "Final parameter object\n\nmcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)"
+  },
+  {
+    "objectID": "mcstate.html#running-pmcmc",
+    "href": "mcstate.html#running-pmcmc",
+    "title": "mcstate",
+    "section": "Running PMCMC",
+    "text": "Running PMCMC\n\ncontrol <- mcstate::pmcmc_control(\n    n_steps = 500,\n    progress = TRUE)\nsamples <- mcstate::pmcmc(mcmc_pars, filter, control = control)\nsamples\n\n<mcstate_pmcmc> (500 samples)\n  pars: 500 x 2 matrix of parameters\n    beta, gamma\n  probabilities: 500 x 3 matrix of log-probabilities\n    log_prior, log_likelihood, log_posterior\n  state: 6 x 500 matrix of final states\n  trajectories: (not included)\n  restart: (not included)"
+  },
+  {
+    "objectID": "mcstate.html#assessing-fit",
+    "href": "mcstate.html#assessing-fit",
+    "title": "mcstate",
+    "section": "Assessing fit",
+    "text": "Assessing fit\n\nJust look at how bad it is\nIn PMCMC, all your ideas from MCMC will be useful but can be misleading; i.e. adaptation is hard\nGelman-Rubin convergence diagnostic\n\nRun multiple chains\nCheck than within-chain variance is similar to between-chain variance\nNecessary but not sufficient to prove convergence\n\nA lot of problems in MCMC come from autocorrelation\nCan use the Gelman Rubin diagnostic"
+  },
+  {
+    "objectID": "mcstate.html#autocorrelation",
+    "href": "mcstate.html#autocorrelation",
+    "title": "mcstate",
+    "section": "Autocorrelation",
+    "text": "Autocorrelation\n\nNotion from time series, which translates for (P)MCMC in term of the steps of the chains\nAutocorrelation refers to the correlation between the values of a time series at different points in time. In MCMC, this means correlation between successive samples.\nIn the context of MCMC, autocorrelation can most of the time be substituted instead of “bad mixing”\nA signature of random-walk MCMC\nLikely to bias estimate (wrong mean) and reduce variance compared with the true posterior distribution\nLinked with the notion of Effective Sample Size, roughly speaking ESS gives the equivalent in i.i.d. samples"
+  },
+  {
+    "objectID": "mcstate.html#autocorrelation-in-practice-faq",
+    "href": "mcstate.html#autocorrelation-in-practice-faq",
+    "title": "mcstate",
+    "section": "Autocorrelation in practice FAQ",
+    "text": "Autocorrelation in practice FAQ\n\nWhy is Autocorrelation a Problem? For optimal performance, we want the samples to be independent and identically distributed (i.i.d.) samples from the target distribution.\nHow to Detect Autocorrelation? We can calculate the autocorrelation function (ACF), which measures the correlation between the samples and their lagged values.\nHow to Reduce Autocorrelation? To mitigate the problem of autocorrelation, there’s a number of strategies, including: using a longer chain, adapting the proposal distribution, using thinning or subsampling techniques. By reducing autocorrelation, we can obtain better estimates of the target distribution and improve the accuracy of our Bayesian inference."
+  },
+  {
+    "objectID": "mcstate.html#thinning-the-chain",
+    "href": "mcstate.html#thinning-the-chain",
+    "title": "mcstate",
+    "section": "Thinning the chain",
+    "text": "Thinning the chain\n\nEither before or after fit\nFaster and less memory to thin before\nMore flexible to thin later\nNo real difference if history not saved\n\nThis is useful because most of your chain is not interesting due to the autocorrelation."
+  },
+  {
+    "objectID": "mcstate.html#plotting-your-chains",
+    "href": "mcstate.html#plotting-your-chains",
+    "title": "mcstate",
+    "section": "Plotting your chains",
+    "text": "Plotting your chains\n\nsamples$probabilities[, \"log_posterior\"]\n\n  [1] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n  [8] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [15] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [22] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [29] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [36] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [43] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [50] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [57] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [64] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [71] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [78] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [85] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -244.4642\n [92] -244.4642 -244.4642 -244.4642 -244.4642 -244.4642 -245.0317 -245.0317\n [99] -245.0317 -245.0317"
+  },
+  {
+    "objectID": "mcstate.html#saving-history",
+    "href": "mcstate.html#saving-history",
+    "title": "mcstate",
+    "section": "Saving history",
+    "text": "Saving history\n\nSave your trajectories at every collected sample\nSave the final state at every sample\nSave full model state at specific points."
+  },
+  {
+    "objectID": "notes.html",
+    "href": "notes.html",
+    "title": "odin etc",
+    "section": "",
+    "text": "Odin is a DSL - a domain specific language. It exists to describe a specific problem efficiently. We developed it to describe ordinary differential equations which evolve a system in continuous time. This is a great target for DSL because it’s just a collection of mathematical truths - rates exist independent of any idea of order of operation.\nGive an example here of an ODE system and corresponding odin code, for a simple SIR model?\nNeed to also show running the model, too, and issues with odin perhaps?\nPrereqs, especially the compilers"
+  },
+  {
+    "objectID": "notes.html#comparison-with-odin",
+    "href": "notes.html#comparison-with-odin",
+    "title": "odin etc",
+    "section": "Comparison with odin",
+    "text": "Comparison with odin\nIn odin we support the idea of interpolating functions, you write:\nbeta <- interpolate(beta_time, beta_value, \"linear\")\nfor example to use linear interpolation between a set of beta time points and values. This is essential for ODE models because we have to be able to look up beta(t) at any real valued t. However, for discrete time models it’s less important - you already know exactly what time steps your model will stop at, in order, because it will stop at every step in turn.\nThe pattern that we used in sircovid is to create a big array beta_step and index into it with\nbeta_step <- if (step >= length(beta_step)) beta_step[length(beta_step)] else beta_step[as.integer(step) + 1]"
+  },
+  {
+    "objectID": "notes.html#avoid-creating-bugs",
+    "href": "notes.html#avoid-creating-bugs",
+    "title": "odin etc",
+    "section": "Avoid creating bugs",
+    "text": "Avoid creating bugs\nBuild your model incrementally, and compile often\nPut your model in a package, put the package under version control, and add some tests with testthat - this is all easier than you might think"
+  },
+  {
+    "objectID": "notes.html#read-the-error-messages",
+    "href": "notes.html#read-the-error-messages",
+    "title": "odin etc",
+    "section": "Read the error messages",
+    "text": "Read the error messages\nif odin can’t compile your model, it will produce a message at the first error\nodin tries pretty hard to produce sensible error messages, do read them\nprovide some common examples here"
+  },
+  {
+    "objectID": "notes.html#add-some-debug-logging",
+    "href": "notes.html#add-some-debug-logging",
+    "title": "odin etc",
+    "section": "Add some debug logging",
+    "text": "Add some debug logging\nWe’ll try and make this easier soon"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "odin, dust, mcstate and friends",
+    "section": "",
+    "text": "introduction to odin, dust and friends\ninference with mcstate\n\nSee the repo for all materials (including copies of the slides)"
+  },
+  {
+    "objectID": "odin.html#an-example",
+    "href": "odin.html#an-example",
+    "title": "odin and dust",
+    "section": "An example",
+    "text": "An example\n\n\nderiv(S) <- -beta * S * I / N\nderiv(I) <- beta * S * I / N - sigma * I\nderiv(R) <- sigma * I\n\ninitial(S) <- N - I0\ninitial(I) <- I0\ninitial(R) <- 0\n\nN <- user(1e6)\nI0 <- user(1)\nbeta <- user(4)\nsigma <- user(2)\n\n\\[\\begin{gather*}\n\\frac{dS}{dt} = -\\beta S \\frac{I}{N}\\\\\n\\frac{dI}{dt} = \\beta S \\frac{I}{N} - \\sigma I\\\\\n\\frac{dR}{dt} = \\sigma I\n\\end{gather*}\\]\n\n\n\nThings to note:\n\nout of order definition\nevery variable has initial and deriv pair\n\n\nThis is the original form of the DSL, supported since 2016."
+  },
+  {
+    "objectID": "odin.html#compiling-the-model",
+    "href": "odin.html#compiling-the-model",
+    "title": "odin and dust",
+    "section": "Compiling the model",
+    "text": "Compiling the model\nsir <- odin::odin({\n  deriv(S) <- -beta * S * I / N\n  deriv(I) <- beta * S * I / N - sigma * I\n  deriv(R) <- sigma * I\n  initial(S) <- N - I0\n  initial(I) <- I0\n  initial(R) <- 0\n  N <- user(1e6)\n  I0 <- user(1)\n  beta <- user(4)\n  sigma <- user(2)\n})\n\nThe odin::odin call generates C code, compiles it with gcc or clang to create a shared library, and loads that plus support code into R to create a generator object gen"
+  },
+  {
+    "objectID": "odin.html#running-the-model",
+    "href": "odin.html#running-the-model",
+    "title": "odin and dust",
+    "section": "Running the model",
+    "text": "Running the model\nmod <- gen$new()\nt <- seq(0, 10, length.out = 501)\ny <- mod$run(t)\nplot(I ~ t, as.data.frame(y), type = \"l\")\n\nFrom the generator object gen we can construct a model (mod), here using no parameters – just using default parameters as defined above. We run over a set of times and output the value of the system at a number of intermediate times."
+  },
+  {
+    "objectID": "odin.html#some-comments",
+    "href": "odin.html#some-comments",
+    "title": "odin and dust",
+    "section": "Some comments",
+    "text": "Some comments\n\nRequires the odin package, along with pkgbuild and pkgload\nRequires a working C compiler\nSort of works for discrete time and stochastic models\nYou’re on your own once you have the model - what you do with it is up to you\n\n\nRunning ODE models is fairly simple because they define a fairly pure function; f(t, theta) -> y which is always the same given t and theta. That’s not the case for stochastic models because each run through gives a different answer"
+  },
+  {
+    "objectID": "odin.html#compared-with-ode-models",
+    "href": "odin.html#compared-with-ode-models",
+    "title": "odin and dust",
+    "section": "…compared with ODE models",
+    "text": "…compared with ODE models\n\n\nupdate(S) <- S - n_SI\nupdate(I) <- I + n_SI - n_IR\nupdate(R) <- R + n_IR\n\nn_SI <- rbinom(S, 1 - exp(-beta * I / N))\nn_IR <- rbinom(I, 1 - exp(-sigma))\n\ninitial(S) <- N - I0\ninitial(I) <- I0\ninitial(R) <- 0\n\nN <- user(1e6)\nI0 <- user(1)\nbeta <- user(4)\nsigma <- user(2)\n\nderiv(S) <- -beta * S * I / N\nderiv(I) <- beta * S * I / N - sigma * I\nderiv(R) <- sigma * I\n\ninitial(S) <- N - I0\ninitial(I) <- I0\ninitial(R) <- 0\n\nN <- user(1e6)\nI0 <- user(1)\nbeta <- user(4)\nsigma <- user(2)"
+  },
+  {
+    "objectID": "odin.html#compiling-with-odin",
+    "href": "odin.html#compiling-with-odin",
+    "title": "odin and dust",
+    "section": "Compiling with odin",
+    "text": "Compiling with odin\ngen <- odin::odin(\"models/sir_stochastic.R\")"
+  },
+  {
+    "objectID": "odin.html#compiling-with-odin.dust",
+    "href": "odin.html#compiling-with-odin.dust",
+    "title": "odin and dust",
+    "section": "Compiling with odin.dust",
+    "text": "Compiling with odin.dust\ngen <- odin.dust::odin_dust(\"models/sir_stochastic.R\")"
+  },
+  {
+    "objectID": "odin.html#running-with-odin.dust",
+    "href": "odin.html#running-with-odin.dust",
+    "title": "odin and dust",
+    "section": "Running with odin.dust",
+    "text": "Running with odin.dust\nmod <- gen$new(list(), time = 0, n_particles = 1)\nmod$run(10)\n\nrun: runs up to some time, returns final values(*)\nsimulate: runs over a series of times, returning values at each time\nDocs for each method here: https://mrc-ide.github.io/dust/reference/dust_generator.html"
+  },
+  {
+    "objectID": "odin.html#odin-vs-odin.dust",
+    "href": "odin.html#odin-vs-odin.dust",
+    "title": "odin and dust",
+    "section": "odin vs odin.dust:",
+    "text": "odin vs odin.dust:\n\nno use of output()\nno use of interpolate() (we might restore this later)\nno use of delay()\nnot all stochastic distributions supported; just tell us if one you need is missing\nthe interface for working with the models is totally different\n\n\nDetails: https://mrc-ide.github.io/odin.dust/articles/porting.html\n\n\n\noutput - not really needed for ODE models because you can just create a new variable\ninterpolate - you can grid out your interpolated function and pass in a vector; we’ll show this later\ndelay - these interact weirdly with stochastic processes"
+  },
+  {
+    "objectID": "odin.html#current-supported-distributions-for-random-draws",
+    "href": "odin.html#current-supported-distributions-for-random-draws",
+    "title": "odin and dust",
+    "section": "Current supported distributions for random draws",
+    "text": "Current supported distributions for random draws\n\nuniform: runif(min, max)\nnormal: rnorm(mean, sd)\nhypergeometric: rhyper(m, n, k)\npoisson: rpois(lambda)\nbinomial: rbinom(n, p)\ngamma: rgamma(shape, scale)\nnegative binomial: rnbinom(size, prob)\nexponential: rexp(rate)"
+  },
+  {
+    "objectID": "odin.html#how-it-works",
+    "href": "odin.html#how-it-works",
+    "title": "odin and dust",
+    "section": "How it works",
+    "text": "How it works\nThe odin code\nupdate(S[]) <- S[i] - n_SI[i]\nbecomes (approximately)\nfor (int i = 0; i < S_length; ++i) {\n  update_S[i] = S[i] + n_SI[i];\n}"
+  },
+  {
+    "objectID": "odin.html#syntax",
+    "href": "odin.html#syntax",
+    "title": "odin and dust",
+    "section": "Syntax",
+    "text": "Syntax\n\nDon’t use index variables on the left hand side\nCan use multiple lines for boundary conditions\nCan crash the program if out of bounds\n\n\nDon’t forget to mention that the index corresponds to the range from the left hand side."
+  },
+  {
+    "objectID": "odin.html#relevant-changes",
+    "href": "odin.html#relevant-changes",
+    "title": "odin and dust",
+    "section": "Relevant changes",
+    "text": "Relevant changes\nm[, ] <- user() # age-structured contact matrix\ns_ij[, ] <- m[i, j] * I[j]\nlambda[] <- beta * sum(s_ij[i, ])\np_SI[] <- 1 - exp(-lambda[i] * dt)\nupdate(S[]) <- S[i] - n_SI[i]\nN_age <- user()\ndim(S) <- N_age\ndim(m) <- c(N_age, N_age)\nYou must declare the dimensions of all arrays!"
+  },
+  {
+    "objectID": "odin.html#system-requirement-openmp",
+    "href": "odin.html#system-requirement-openmp",
+    "title": "odin and dust",
+    "section": "System requirement: OpenMP",
+    "text": "System requirement: OpenMP\n\ndust::dust_openmp_support()\n\n$num_procs\n[1] 20\n\n$max_threads\n[1] 20\n\n$thread_limit\n[1] 2147483647\n\n$openmp_version\n[1] 201511\n\n$has_openmp\n[1] TRUE\n\n$mc.cores\n[1] NA\n\n$OMP_THREAD_LIMIT\n[1] NA\n\n$OMP_NUM_THREADS\n[1] NA\n\n$MC_CORES\n[1] 10\n\n$limit_r\n[1] 10\n\n$limit_openmp\n[1] 20\n\n$limit\n[1] 10\n\n\n\nLinux, Windows: works out the box - including on the cluster\nmacOS: possible but annoying"
+  },
+  {
+    "objectID": "odin.html#running-in-parallel-does-not-change-results",
+    "href": "odin.html#running-in-parallel-does-not-change-results",
+    "title": "odin and dust",
+    "section": "Running in parallel does not change results",
+    "text": "Running in parallel does not change results\nsir <- dust::dust_example(\"sir\")\nsir$new(list(), 0, n_particles = 128, n_threads = 16, seed = 1)$run(10)\nsir$new(list(), 0, n_particles = 128, n_threads = 1, seed = 1)$run(10)\n\nRunning in parallel will not change results - this is an important design decision in dust. No matter how many threads you use for your problem you should get the same answer. It is possible that you may see different answers on different platforms however.\nTo bring up a model with more than one thread, add n_threads = 8 when you initialise it, or use the set_n_threads() method on an object that already exists. Going beyond the number of threads you have on your machine will not typically show a good speedup.\nMany methods are parallelised, but run and simulate are the ones you’ll notice.\nUnlike parallel::parLapply etc more threads does not increase memory usage."
+  },
+  {
+    "objectID": "odin.html#parallelisation-strategy",
+    "href": "odin.html#parallelisation-strategy",
+    "title": "odin and dust",
+    "section": "Parallelisation strategy",
+    "text": "Parallelisation strategy\nAlways parallelise at the coarsest level first\n\nSame analysis independently on 10 regions - send each to cluster separately\nMCMC chains within analysis - run each on a separate process\nWithin each chain, parallelise at the particle level\n\nDon’t use mclapply or parLapply, etc.\n\nThere are two things fighting us here:\n\nAmdahl’s law, which says that if our program is only partly parallel then our parallelisation will have diminishing returns\nInefficiencies in the parallelism - this includes overhead around the parallelism itelf (copying data around etc) and limitations in the design (if the operating system wants to write to memory that is nearby on two different threads)\n\nExpect a pretty good speedup to about 8 cores or so for particles. You can keep a 32 core node very happy with four MCMC chains above that.\nIssues for builtin parallelism:\n\nEfficiency, especially data transfer\nSeeding and rng state - won’t actually differ"
+  },
+  {
+    "objectID": "odin.html#adding-vaccination-to-the-model",
+    "href": "odin.html#adding-vaccination-to-the-model",
+    "title": "odin and dust",
+    "section": "Adding vaccination to the model",
+    "text": "Adding vaccination to the model\n\nOne approach to modelling vaccination, susceptibles only:\nNested binomial draw for vaccination in S\nAssume you cannot move vaccine class and get infected in same step"
+  },
+  {
+    "objectID": "odin.html#relevant-changes-1",
+    "href": "odin.html#relevant-changes-1",
+    "title": "odin and dust",
+    "section": "Relevant changes",
+    "text": "Relevant changes\nrel_susceptibility[, ] <- user()\np_vacc[, ] <- 1 - exp(-eta[i, j] * dt)\nn_S_vacc[, ] <- rbinom(S[i, j] - n_SI[i, j], p_vacc[i, j])\np_SI[, ] <- 1 - exp(-rel_susceptibility[i, j] * lambda[i] * dt) # S to I\nnew_S[, ] <- S[i, j] - n_SI[i, j] - n_S_vacc[i, j] +\n  (if (j == 1) n_S_vacc[i, N_vacc_classes] else n_S_vacc[i, j - 1])\nupdate(S[, ]) <- new_S[i, j]"
+  },
+  {
+    "objectID": "odin.html#create-a-package",
+    "href": "odin.html#create-a-package",
+    "title": "odin and dust",
+    "section": "Create a package",
+    "text": "Create a package\n\nBasic skeleton using usethis::create_r_package(\"mymodel\")\nAdd DSL code to inst/odin\nEdit DESCRIPTION:\n\nAdd cpp11 and dust to section LinkingTo\nAdd dust to Imports\nAdd SystemRequirements: C++11\n\nAdd #' @useDynLib mymodel, .registration = TRUE somewhere (e.g., R/zzz.R)\nRun odin.dust::odin_dust_package() to generate files\nRun devtools::document() to update NAMESPACE\nRun pkgload::load_all() to compile and load"
+  },
+  {
+    "objectID": "odin.html#update-a-package",
+    "href": "odin.html#update-a-package",
+    "title": "odin and dust",
+    "section": "Update a package",
+    "text": "Update a package\n\nEdit DSL code in inst/odin\nodin.dust::odin_dust_package() to generate files\nRun pkgload::load_all() to compile and load"
+  },
+  {
+    "objectID": "odin.html#next-steps",
+    "href": "odin.html#next-steps",
+    "title": "odin and dust",
+    "section": "Next steps",
+    "text": "Next steps\n\nAdd wrapper functions to generate parameters, process output etc\nWrite unit tests to keep things working\nSet up GitHub Actions to run tests automatically\nCreate a nice website with pkgdown\n\nDetails: https://r-pkgs.org/"
+  },
+  {
+    "objectID": "odin.html#requirements",
+    "href": "odin.html#requirements",
+    "title": "odin and dust",
+    "section": "Requirements",
+    "text": "Requirements\n\nAn NVIDIA GPU - at least a 20xx series (~2018 or later)\nAll the nvcc toolchain (this is annoying to install)"
+  },
+  {
+    "objectID": "odin.html#workflow",
+    "href": "odin.html#workflow",
+    "title": "odin and dust",
+    "section": "Workflow",
+    "text": "Workflow\n\nRecompile the model code again, changing real type\nInitialise model specifying which gpu to use\nBenchmark with NVIDIA’s tools (nsight compute etc)\n\ngpu <- dust::dust_cuda_options(fast_math = TRUE)\ngen <- odin.dust::odin_dust_(path, real_type = \"float\", gpu = gpu)\nmod <- gen$new(list(), 0, 65536, gpu_config = 0L)\nmod$run(100) # runs on GPU!\nExpect to run tens of thousands of particles or more, and have a strategy for working with this much data!"
+  },
+  {
+    "objectID": "mcstate.html#the-data",
+    "href": "mcstate.html#the-data",
+    "title": "mcstate",
+    "section": "The data",
+    "text": "The data\n\nincidence <- read.csv(\"data/incidence.csv\")\nhead(incidence)\n\n  cases day\n1     3   1\n2     2   2\n3     2   3\n4     2   4\n5     1   5\n6     3   6\n\nplot(cases ~ day, incidence, pch = 19, las = 1)"
+  },
+  {
+    "objectID": "mcstate.html#the-data-1",
+    "href": "mcstate.html#the-data-1",
+    "title": "mcstate",
+    "section": "The data",
+    "text": "The data\n\ndata <- mcstate::particle_filter_data(incidence, time = \"day\", rate = 4, initial_time = 0)\nhead(data)\n\n  day_start day_end time_start time_end cases\n1         0       1          0        4     3\n2         1       2          4        8     2\n3         2       3          8       12     2\n4         3       4         12       16     2\n5         4       5         16       20     1\n6         5       6         20       24     3"
+  },
+  {
+    "objectID": "mcstate.html#data-preparation",
+    "href": "mcstate.html#data-preparation",
+    "title": "mcstate",
+    "section": "Data preparation",
+    "text": "Data preparation\n\ndata <- mcstate::particle_filter_data(\n  incidence, time = \"day\", rate = 4, initial_time = 0)\nhead(data)\n\n  day_start day_end time_start time_end cases\n1         0       1          0        4     3\n2         1       2          4        8     2\n3         2       3          8       12     2\n4         3       4         12       16     2\n5         4       5         16       20     1\n6         5       6         20       24     3"
+  },
+  {
+    "objectID": "mcstate.html#the-model",
+    "href": "mcstate.html#the-model",
+    "title": "mcstate",
+    "section": "The model",
+    "text": "The model\nN <- S + I + R\np_SI <- 1 - exp(-(beta) * I / N)\np_IR <- 1 - exp(-(gamma))\nn_IR <- rbinom(I, p_IR * dt)\nn_SI <- rbinom(S, p_SI * dt)\n\nupdate(time) <- (step + 1) * dt\nupdate(S) <- S - n_SI\nupdate(I) <- I + n_SI - n_IR\nupdate(R) <- R + n_IR\nupdate(cases_cumul) <- cases_cumul + n_SI\nupdate(cases_inc) <- if (step %% freq == 0) n_SI else cases_inc + n_SI\n\ninitial(time) <- 0\ninitial(S) <- 1000\ninitial(R) <- 0\ninitial(I) <- I0\ninitial(cases_cumul) <- 0\ninitial(cases_inc) <- 0\n\nbeta <- user(0.2)\ngamma <- user(0.1)\nI0 <- user(10)\n\nfreq <- user(4)\ndt <- 1.0 / freq"
+  },
+  {
+    "objectID": "mcstate.html#compiling-the-model",
+    "href": "mcstate.html#compiling-the-model",
+    "title": "mcstate",
+    "section": "Compiling the model",
+    "text": "Compiling the model\n\nsir <- odin.dust::odin_dust(\"models/sir.R\")\n\n* installing *source* package ‘sira5d4bd1a’ ...\n** using staged installation\n** libs\ng++ -std=gnu++11 -I\"/usr/share/R/include\" -DNDEBUG  -I'/home/rfitzjoh/lib/R/library/cpp11/include' -g -Wall -Wextra -pedantic -Wmaybe-uninitialized -Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers -O2  -I/home/rfitzjoh/lib/R/library/dust/include -DHAVE_INLINE -fopenmp -fpic  -g -O2 -fdebug-prefix-map=/build/r-base-a3XuZ5/r-base-4.2.2.20221110=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2  -c cpp11.cpp -o cpp11.o\ng++ -std=gnu++11 -I\"/usr/share/R/include\" -DNDEBUG  -I'/home/rfitzjoh/lib/R/library/cpp11/include' -g -Wall -Wextra -pedantic -Wmaybe-uninitialized -Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers -O2  -I/home/rfitzjoh/lib/R/library/dust/include -DHAVE_INLINE -fopenmp -fpic  -g -O2 -fdebug-prefix-map=/build/r-base-a3XuZ5/r-base-4.2.2.20221110=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2  -c dust.cpp -o dust.o\ng++ -std=gnu++11 -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o sira5d4bd1a.so cpp11.o dust.o -fopenmp -L/usr/lib/R/lib -lR\ninstalling to /tmp/Rtmp0uMqpV/devtools_install_2537dc153befd2/00LOCK-file2537dc5e692547/00new/sira5d4bd1a/libs\n** checking absolute paths in shared objects and dynamic libraries\n* DONE (sira5d4bd1a)"
+  },
+  {
+    "objectID": "mcstate.html#the-compare-function",
+    "href": "mcstate.html#the-compare-function",
+    "title": "mcstate",
+    "section": "The compare function",
+    "text": "The compare function\n\n\ncompare <- function(state, observed, pars = NULL) {\n  modelled <- state[\"incidence\", , drop = TRUE]\n  lambda <- modelled + rexp(length(modelled), 1e6)\n  dpois(observed$cases, lambda, log = TRUE)\n}\n\nThis is the important bit, and something that is a trick to write well."
+  },
+  {
+    "objectID": "mcstate.html#the-index-function",
+    "href": "mcstate.html#the-index-function",
+    "title": "mcstate",
+    "section": "The index function",
+    "text": "The index function\n\nYou rarely care about all the state variables\nYou might want different state variables for your compare and for plotting\n\n\nindex <- function(info) {\n  list(run = c(incidence = info$index$cases_inc),\n       state = c(t = info$index$time,\n                 I = info$index$I,\n                 cases = info$index$cases_inc))\n}\nindex(mod$info())\n\n$run\nincidence \n        6 \n\n$state\n    t     I cases \n    1     4     6"
+  },
+  {
+    "objectID": "mcstate.html#particle-filter-history",
+    "href": "mcstate.html#particle-filter-history",
+    "title": "mcstate",
+    "section": "Particle filter history",
+    "text": "Particle filter history\nFirst, run the filter while saving history (off by default)\n\nfilter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,\n                                       compare = compare, index = index)\nfilter$run(save_history = TRUE)\n\n[1] -246.4271"
+  },
+  {
+    "objectID": "mcstate.html#particle-filter-history-for-unobserved-states",
+    "href": "mcstate.html#particle-filter-history-for-unobserved-states",
+    "title": "mcstate",
+    "section": "Particle filter history for unobserved states",
+    "text": "Particle filter history for unobserved states\n\nmatplot(h[\"t\", 1, ], t(h[\"I\", , ]), type = \"l\", col = \"#00000011\", \n        xlab = \"Day\", ylab = \"Number of infecteds (I)\", las = 1)"
+  },
+  {
+    "objectID": "mcstate.html#running-in-parallel",
+    "href": "mcstate.html#running-in-parallel",
+    "title": "mcstate",
+    "section": "Running in parallel",
+    "text": "Running in parallel\nArguments to mcstate::pmcmc_control\n\nn_chains: number of separate chains to run\nn_threads_total: total number of threads to use\nn_workers: number of separate threads to split your chains over\nuse_parallel_seed: helps with reproducibility\n\nYou can also run different chains on different cluster nodes - but talk to us about this."
+  },
+  {
+    "objectID": "mcstate.html#lets-try-again",
+    "href": "mcstate.html#lets-try-again",
+    "title": "mcstate",
+    "section": "Let’s try again",
+    "text": "Let’s try again\n\nvcv <- matrix(c(0.00057, 0.00052, 0.00052, 0.00057), 2, 2)\nmcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)\ncontrol <- mcstate::pmcmc_control(\n    n_steps = 500,\n    n_chains = 4,\n    n_threads_total = 12,\n    n_workers = 4,\n    save_state = TRUE,\n    save_trajectories = TRUE,\n    progress = TRUE)\nsamples <- mcstate::pmcmc(mcmc_pars, filter, control = control)\nplot(samples$probabilities[, \"log_posterior\"], type = \"s\")"
+  },
+  {
+    "objectID": "mcstate.html#our-pmcmc-samples",
+    "href": "mcstate.html#our-pmcmc-samples",
+    "title": "mcstate",
+    "section": "Our PMCMC samples",
+    "text": "Our PMCMC samples\n\nplot(samples$probabilities[, \"log_posterior\"], type = \"s\",\n     xlab = \"Sample\", ylab = \"Log posterior\")\n\n\n\noh."
+  },
+  {
+    "objectID": "mcstate.html#the-filter-in-action",
+    "href": "mcstate.html#the-filter-in-action",
+    "title": "mcstate",
+    "section": "The filter in action",
+    "text": "The filter in action"
+  }
+]

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.313">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>odin etc – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">odin etc</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html">
+ <span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+
+<section id="what-is-odin" class="level1">
+<h1>What is odin?</h1>
+<p>Odin is a DSL - a domain specific language. It exists to describe a specific problem efficiently. We developed it to describe ordinary differential equations which evolve a system in continuous time. This is a great target for DSL because it’s just a collection of mathematical truths - rates exist independent of any idea of order of operation.</p>
+<p>Give an example here of an ODE system and corresponding odin code, for a simple SIR model?</p>
+<p>Need to also show running the model, too, and issues with odin perhaps?</p>
+<p>Prereqs, especially the compilers</p>
+</section>
+<section id="what-about-discrete-time-models" class="level1">
+<h1>What about discrete time models</h1>
+<p>You can extend this same idea to discrete time models, if you’re willing to make a few sacrafices along the way. The issue is that a discrete time system is really arbitrary computation - at any particular time really anything can happen (e.g.&nbsp;an intervention that changes the sytem arbitrarily). In addition, the order in which events happens has an effect as we’re no longer describing rates but changes to some quantity. For example, you get different behaviour in a birth/death/migration model if you change the order of events (Sally’s book has something on this).</p>
+</section>
+<section id="what-about-stochastic-models" class="level1">
+<h1>What about stochastic models?</h1>
+<p>One thing that discrete time models allow for is stochasticity - random updates to variables. You can’t do this in continuous time models (unless you make some very limiting assumptions and consider only brownian motion changes to a single variable to get some degree of tractability for an SDE). As soon as things become stochastic we are rarely interested in single realisations from the process, but instead some set (or summary of a set) of realisations of the stochastic process.</p>
+<p>(There’s lots to discuss here if people are interested, especially once we get to the parallelism section, so we’ll leave it until there)</p>
+<p>Same example here of ODE model converted to use binomial draws, then a summary of the trajectories out of this.</p>
+</section>
+<section id="real-model-here-epi" class="level1">
+<h1>Real model here (epi)</h1>
+<ul>
+<li>show run, simulate - any other methods?</li>
+<li>time scaling</li>
+</ul>
+</section>
+<section id="differences-in-odin-and-odin.dust-discrete-support" class="level1">
+<h1>Differences in odin and odin.dust discrete support</h1>
+<p>Before getting to the good bits, here’s what you can’t do:</p>
+<ul>
+<li>no use of <code>output()</code>; this is required in ODE models to use non-variable quantities but this is not needed in discrete time models</li>
+<li>no use of <code>interpolate()</code>; we might restore this later</li>
+<li>no use of <code>delay()</code>; this is hard to do well and was not well supported for discrete time models anyway</li>
+<li>not all stochastic distributions supported; just tell us if one you need is missing</li>
+<li>the interface for working with the models is different</li>
+</ul>
+<p>https://mrc-ide.github.io/odin.dust/articles/porting.html</p>
+</section>
+<section id="adding-dimensions-epi" class="level1">
+<h1>Adding dimensions (epi)</h1>
+</section>
+<section id="running-models-in-parallel" class="level1">
+<h1>Running models in parallel</h1>
+<p>As models get more complicated, they take longer to run. One of the big advantages - possibly the biggest - of odin over odin.dust is that models can take advantage of multiple cores to efficiently compute different realisations at the same time. This will take <em>at least</em> the same amount of CPU time but probably less wall-time</p>
+<ul>
+<li>wall time vs cpu time - add a diagram showing how this works</li>
+<li>efficiency comparing wall and cpu time - show real benchmarks on our simple models</li>
+<li>why can’t we use mcapply etc?
+<ul>
+<li>efficiency (data transfer overhead especially)</li>
+<li>seeding and rng state</li>
+</ul></li>
+</ul>
+<p>Parallelisation strategy: always parallelise at the coarsest level first</p>
+<ul>
+<li>running the same thing over 10 regions, or for 5 different broad set of assumptions: set these off on a cluster on different nodes. These don’t interfere and that gives you maximum efficiency.</li>
+<li>running different MCMC chains within an analysis? This is the next block of parallelism, but be careful about seeding</li>
+<li>within a chain we can then use parallelism to make the model faster but due to Amdhel’s Law, this will never be a perfect speedup (as we only parallelise some fraction of the process)</li>
+</ul>
+<p>dust does a few things here to help you:</p>
+<ul>
+<li>it has a parallel random number generator that can be run in parallel, done by starting many positions along the state space of the uniform random number process</li>
+<li>it then has distribution functions for converting U(0, 1) numbers into your distribution of choice without using any global state</li>
+<li>it also has tools to help you start a distributed set of parallel calculations at points even further apart in the stream (for mcmc), and saving/reloading that rng state</li>
+</ul>
+<p>Important that this is totally different to the R RNG engine</p>
+<p>Do not parallelise dust models with mclapply, parLapply, doParallel or similar, it will be less efficient than using its own parallel methods, and may not work due to how memory is set up.</p>
+<p>You need OpenMP set up on your machine for this to work. For macOS this is a drag. For windows and Linux it should work out of the box.</p>
+<p>Check your system with:</p>
+<pre><code>dust::dust_openmp_support()</code></pre>
+<p>Test if a model has support:</p>
+<pre><code>walk$public_methods$has_openmp()
+walk$new(list(sd = 1), 0, 1)$as_openmp()</code></pre>
+<p><strong>Running in parallel will not change results</strong> - this is an important design decision in dust. No matter how many threads you use for your problem you should get the same answer. It is possible that you may see different answers on different platforms however.</p>
+<p>To bring up a model with more than one thread, add <code>n_threads = 8</code> when you initialise it, or use the <code>set_n_threads()</code> method on an object that already exists. Going beyond the number of threads you have on your machine will not typically show a good speedup.</p>
+<p>Many methods are parallelised, but <code>run</code> and <code>simulate</code> are the ones you’ll notice.</p>
+<p>Unlike <code>parallel::parLapply</code> etc more threads does not increase memory usage.</p>
+</section>
+<section id="more-dimensions---age-x-vaccination-epi" class="level1">
+<h1>More dimensions - age x vaccination (epi)</h1>
+</section>
+<section id="packaging-your-models" class="level1">
+<h1>Packaging your models</h1>
+<p>Working with <code>odin.dust::odin_dust</code> is pretty tedious and has some drawbacks. In particular, every user of the model is required to have a C++ compiler installed, and every time you run anything with the model you need to compile it. As C++ is slow to compile, this can represent a decent chunk of the time taken to run the model!</p>
+<p>Packaging a model is easy:</p>
+<ol type="1">
+<li>Create a basic skeleton for your package with <code>usethis::create_r_package("mymodel")</code></li>
+<li>Add the DSL code into a file within <code>inst/odin</code></li>
+<li>Edit <code>DESCRIPTION</code>:
+<ul>
+<li>add cpp11 and dust to LinkingTo</li>
+</ul></li>
+<li>Add the useDynLib junk somewhere</li>
+<li>Run <code>odin.dust::odin_dust()</code> to generate all the files</li>
+<li>Load your package locally with <code>pkgload::load_all()</code></li>
+</ol>
+<p>Once you have a package you can do lots of fun things as a developer:</p>
+<ul>
+<li>Add wrapper functions to generate your parameters</li>
+<li>Write unit tests to make sure that things stay working</li>
+<li>Set up GitHub actions to run your tests automatically as you develop</li>
+<li>Create a nice website explaining to the world what your package does</li>
+</ul>
+<p>Your users get a couple of nice installation routes (e.g., <code>remotes:install_github</code>, drat, r-universe with binaries) depending.</p>
+</section>
+<section id="time-varying-parameters-epi" class="level1">
+<h1>Time varying parameters (epi)</h1>
+<p>Example using contact rates?</p>
+<section id="comparison-with-odin" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-with-odin">Comparison with odin</h2>
+<p>In odin we support the idea of interpolating functions, you write:</p>
+<pre><code>beta &lt;- interpolate(beta_time, beta_value, "linear")</code></pre>
+<p>for example to use linear interpolation between a set of beta time points and values. This is essential for ODE models because we have to be able to look up <code>beta(t)</code> at any real valued <code>t</code>. However, for discrete time models it’s less important - you already know <em>exactly</em> what time steps your model will stop at, in order, because it will stop at every step in turn.</p>
+<p>The pattern that we used in sircovid is to create a big array <code>beta_step</code> and index into it with</p>
+<pre><code>beta_step &lt;- if (step &gt;= length(beta_step)) beta_step[length(beta_step)] else beta_step[as.integer(step) + 1]</code></pre>
+</section>
+</section>
+<section id="running-models-on-a-gpu" class="level1">
+<h1>Running models on a GPU</h1>
+<p>This goes beyond what is really needed for an introduction, but it’s something that I want to highlight.</p>
+<p>The parallelisation strategy that we use for dust models scales really well, and you can use this to scale off a CPU and onto a GPU.</p>
+<p>CPUs are good at doing general purpose calculations and in a good multicore system you might be able to do up to 16 different things at once. You can program against these using standard APIs, and the only issue is making sure that you don’t have any data races really.</p>
+<p>GPUs are more challenging. They rely on lining up a bunch of different bits of data and then applying <em>exactly</em> the same code to each piece of data at the same time. While this is happening they can organise getting the next bits of data lined up for the next calculations. The payback is that you get potentially tens of thousands of cores at once, but the cost is that every <code>if</code> statement is a chore.</p>
+<p>odin.dust hides all this from you and you can compile your model without any modification. To do this you need:</p>
+<ul>
+<li>an NVIDIA GPU at least a RTX 20xx (circa 2018 and on). A builtin GPU in your laptop is generally not enough unless you have a very fancy laptop</li>
+<li>all the NVIDIA toolchain (nvcc) in addition to the usual build tools</li>
+</ul>
+<p>The general strategy is to recompile the model in <em>single precision mode</em> targetting the GPU your system has available.</p>
+<p>You then need to start the model targetting one of the GPUs on the machine. By default we’ll use the first one (id 0) but you can use any of the available devices.</p>
+<p>You should expect to run <em>at least 100,000</em> particles to get a decent benefit of this approach. The benefit is in number of particles per unit walltime, not in walltime itself.</p>
+<p>Tuning</p>
+<ul>
+<li>At compilation you can also choose to make some additional optimisations such as fixing the dimensions of any arrays being used; this reduces the number of registers and opens up a few more optimisations</li>
+<li>At model initialisation you can change the block size which has a big effect on how the resources are allocated</li>
+<li>Sometimes you can get better performance by forcing the model to use fewer registers than it wants</li>
+<li>You’ll inevitably need to use the profiler to check your kernel, this is quite fun in practice</li>
+</ul>
+</section>
+<section id="erlang-distributions-epi" class="level1">
+<h1>Erlang distributions (epi)</h1>
+</section>
+<section id="debugging-strategies" class="level1">
+<h1>Debugging strategies</h1>
+<p>Any C/C++ error is a bug, repoducible examples are appreciated.</p>
+<section id="avoid-creating-bugs" class="level2">
+<h2 class="anchored" data-anchor-id="avoid-creating-bugs">Avoid creating bugs</h2>
+<p>Build your model incrementally, and compile often</p>
+<p>Put your model in a package, put the package under version control, and add some tests with testthat - this is all easier than you might think</p>
+</section>
+<section id="read-the-error-messages" class="level2">
+<h2 class="anchored" data-anchor-id="read-the-error-messages">Read the error messages</h2>
+<p>if odin can’t compile your model, it will produce a message at the <em>first</em> error</p>
+<p>odin tries pretty hard to produce sensible error messages, do read them</p>
+<p>provide some common examples here</p>
+</section>
+<section id="add-some-debug-logging" class="level2">
+<h2 class="anchored" data-anchor-id="add-some-debug-logging">Add some debug logging</h2>
+<p>We’ll try and make this easier soon</p>
+</section>
+</section>
+<section id="whats-next" class="level1">
+<h1>What’s next?</h1>
+<ul>
+<li>Assoiating data with your model</li>
+<li>Running a particle filter</li>
+<li>Doing inference with your model and data!</li>
+</ul>
+</section>
+<section id="other-advanced-things" class="level1">
+<h1>Other advanced things</h1>
+<ul>
+<li>extend your model with custom c++ code</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
