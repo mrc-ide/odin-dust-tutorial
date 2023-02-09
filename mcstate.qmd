@@ -44,6 +44,18 @@ set.seed(1) # always the same
   - "Filtering" i.e. estimate the hidden states $x_{t}$ from the observations $y_t$
   - "Inference" i.e. estimate the $\theta$'s compatible with the observations $y_{t}$
 
+# Sequential Monte Carlo (the particle filter)
+
+At each iteration, $t$, BSSMC updates a sample of $N$ particles, ${\theta_i^t}_{i=1}^N$, to approximate the posterior distribution, $p(\theta|y)$.
+
+Resample particles according to weights, $w_i^t \propto p(y|\theta_i^t)$.
+
+Propagate particles to the next iteration, $\theta_i^{t+1} \sim p(\theta|\theta_i^t,y)$.
+
+Update weights, $w_i^{t+1} \propto p(y|\theta_i^{t+1})$.
+
+
+
 # Particle MCMC
 
 ## What is Particle MCMC?
@@ -138,8 +150,8 @@ points(cases ~ day, incidence, col = "red", pch = 19)
 
 ## index function
 
-* You rarely care about all variables
-* You might want different variables for your compare and for plotting
+* You rarely care about all the state variables
+* You might want different state variables for your compare and for plotting
 
 ```{r}
 #| echo = TRUE
@@ -348,12 +360,12 @@ samples
 * Autocorrelation refers to the correlation between the values of a time series at different points in time. In MCMC, this means correlation between successive samples.
 * In the context of MCMC, autocorrelation can most of the time be substituted instead of "bad mixing"
 * A signature of random-walk MCMC
-* Likely to bias estimate (wrong mean) and reduce variance compare with the true posterior distribution of the estimate 
+* Likely to bias estimate (wrong mean) and reduce variance compared with the true posterior distribution
 * Linked with the notion of Effective Sample Size, roughly speaking ESS gives the equivalent in i.i.d. samples
 
 ## Autocorrelation in practice FAQ
 
-* **Why is Autocorrelation a Problem?** For optimal performance, we want the samples to be independent and identically distributed (i.i.d.) samples from the target distribution. However, if the Markov Chain has high autocorrelation, it means that the samples are not i.i.d., and they do not accurately represent the target distribution.
+* **Why is Autocorrelation a Problem?** For optimal performance, we want the samples to be independent and identically distributed (i.i.d.) samples from the target distribution. 
 * **How to Detect Autocorrelation?** We can calculate the **autocorrelation function (ACF)**, which measures the correlation between the samples and their lagged values.
 * **How to Reduce Autocorrelation?** To mitigate the problem of autocorrelation, there's a number of strategies, including: using a longer chain, adapting the proposal distribution, using thinning or subsampling techniques. By reducing autocorrelation, we can obtain better estimates of the target distribution and improve the accuracy of our Bayesian inference.
 
