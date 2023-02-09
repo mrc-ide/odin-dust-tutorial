@@ -316,7 +316,7 @@ priors <- list(
 
 ```{r}
 #| echo: TRUE
-vcv <- diag(0.1, 2)
+vcv <- diag(0.01, 2)
 vcv
 ```
 
@@ -357,13 +357,17 @@ mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)
 ```{r}
 #| echo: TRUE
 control <- mcstate::pmcmc_control(
-    n_steps = 100,
-    save_state = TRUE,
-    save_trajectories = TRUE,
+    n_steps = 500,
     progress = TRUE)
 samples <- mcstate::pmcmc(mcmc_pars, filter, control = control)
 samples
+plot(samples$probabilities[, "log_posterior"], type = "s",
+     xlab = "Sample", ylab = "Log posterior")
 ```
+
+---
+
+oh.
 
 ## Assessing fit
 
@@ -399,11 +403,32 @@ samples
 
 This is useful because most of your chain is not interesting due to the autocorrelation.
 
-## Plotting your chains
+## Running in parallel
+
+Arguments to  [`mcstate::pmcmc_control`](https://mrc-ide.github.io/mcstate/reference/pmcmc_control.html)
+
+* `n_chains`: number of separate chains to run
+* `n_threads_total`: total number of threads to use
+* `n_workers`: number of separate threads to split your chains over
+* `use_parallel_seed`: helps with reproducubility
+
+You can also run different chains on different cluster nodes - but talk to us about this.
+
+## Let's try again
 
 ```{r}
-#| echo: TRUE
-samples$probabilities[, "log_posterior"]
+vcv <- matrix(c(0.00057, 0.00052, 0.00052, 0.00057), 2, 2)
+mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)
+control <- mcstate::pmcmc_control(
+    n_steps = 500,
+    n_chains = 4,
+    n_threads_total = 12,
+    n_workers = 4,
+    save_state = TRUE,
+    save_trajectories = TRUE,
+    progress = TRUE)
+samples <- mcstate::pmcmc(mcmc_pars, filter, control = control)
+plot(samples$probabilities[, "log_posterior"], type = "s")
 ```
 
 ## Saving history
