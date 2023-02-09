@@ -125,7 +125,7 @@ sir <- odin.dust::odin_dust("models/sir.R")
 ## The model over time
 
 ```{r}
-pars <- list(beta = 0.25, gamma = 0.1, freq = 4)
+pars <- list(beta = 0.25, gamma = 0.1)
 mod <- sir$new(pars, 0, 20)
 y <- mod$simulate(c(0, data$time_end))
 i <- mod$info()$index[["time"]]
@@ -137,31 +137,55 @@ points(cases ~ day, incidence, col = "red", pch = 19)
 
 ## index function
 
-[...get this working]
+* You rarely care about all variables
+* You might want different variables for your compare and for plotting
+
+```{r}
+index <- function(info) {
+  list(run = c(incidence = info$index$cases_inc),
+       state = c(t = info$index$time,
+                 I = info$index$I,
+                 cases = info$index$cases_inc))
+}
+index(mod$info())
+```
 
 ## compare
 
-[...show maths]
-
-[...show code]
-
 ![State space model diagram](images/SSM.jpg)
+
+```{r}
+compare <- function(state, observed, pars = NULL) {
+  modelled <- state["incidence", , drop = TRUE]
+  lambda <- modelled + rexp(length(modelled), 1e6)
+  dpois(observed$cases, lambda, log = TRUE)
+}
+```
+
+given
+
+```{r}
+index
+head(data)
+```
 
 This is the important bit, and something that is a trick to write well.
 
 ## Files, from this repo
 
-- [`sir.csv`](...) - daily case information
-- [`sir.R`](...) - a simple SIR model with incidence
-- [`index.R`](...) - an index function
-- [`compare.R`](...) - a compare function
+- [`incidence.csv`](data/incidence.csv) - daily case information
+- [`sir.R`](models/sir.R) - a simple SIR model with incidence
+- [`index.R`](R/index.R) - an index function
+- [`compare.R`](R/compare.R) - a compare function
 
+Or browse <https://github.com/mrc-ide/odin-dust-tutorial>
 
 # A particle filter
 
 ```r
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
                                        compare = compare, index = index)
+pars <- list(beta = 0.25, gamma = 0.1)
 filter$run(pars)
 ```
 
@@ -176,10 +200,10 @@ replicate(10, filter$run(pars))
 ```
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 10,
                                        compare = compare, index = index)
-replicate(10, filter$run(pars))
+sort(replicate(10, filter$run(pars)))
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 1000,
                                        compare = compare, index = index)
-replicate(10, filter$run(pars))
+sort(replicate(10, filter$run(pars)))
 ```
 
 - Monte Carlo estimations typically see variance decrease with sample size, this is no different.
@@ -192,27 +216,19 @@ replicate(10, filter$run(pars))
 ## Particle filter history is a tree
 
 ```r
+filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
+                                       compare = compare, index = index)
 filter$run(save_history = TRUE)
 times <- data$time_end
 h <- filter$history()
-matplot(t(h["I", , ]), type = "l", col = "#00000033")
+matplot(h["t", 1, ], t(h["cases", , ]), type = "l", col = "#00000011", 
+        xlab = "Day", ylab = "Cases", las = 1)
+points(cases ~ day, incidence, pch = 19, col = "red")
 ```
 
-[show the gif here again]
-
-  
-## Building up
-
- 
-## Implementing the filter
-  
-```{.r}
-n_particles <- 100
-filter <- mcstate::particle_filter$new(data = sir_data,
-                                       model = gen_sir,
-                                       n_particles = n_particles,
-                                       compare = case_compare,
-                                       seed = 1L)
+```{r}
+matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011", 
+        xlab = "Day", ylab = "Number of infecteds (I)", las = 1)
 ```
 
 # PMCMC
@@ -244,23 +260,85 @@ filter <- mcstate::particle_filter$new(data = sir_data,
 
 ## Priors
 
+```{r}
+priors <- list(
+  mcstate::pmcmc_parameter("beta", 0.2, min = 0),
+  mcstate::pmcmc_parameter("gamma", 0.1, min = 0, prior = function(p)
+    dgamma(p, shape = 1, scale = 0.2, log = TRUE)))
+```
+
+(this will improve in future, feedback very welcome)
+
 ## Proposal
+
+* Variance covariance matrix for a multivariate normal distribution
+* Symmetric (except for reflections at any provided boundaries)
+
+```{r}
+vcv <- diag(0.1, 2)
+vcv
+```
 
 ## Transformation
 
+Convert "mcmc parameters" into "model parameters"
+
+```{r}
+transform <- function(theta) {
+  as.list(theta)
+}
+```
+
+You will want closures in complex models:
+
+```r
+make_transform <- function(contact_matrix, vaccine_schedule) {
+  function(theta) {
+    list(contact_matrix = contaxt_matrix,
+         vaccine_schedule = vaccine_schedule,
+         beta = theta[["beta"]],
+         gamma = theta[["gamma"]])
+  }
+}
+transform <- function(contact_matrix, vaccine_schedule)
+```
+
+## Final parameter object
+
+```{r}
+mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)
+```
+
 ## Running PMCMC
 
-[example]
+```{r}
+control <- mcstate::pmcmc_control(
+    n_steps = 100,
+    save_state = TRUE,
+    save_trajectories = TRUE,
+    progress = TRUE)
+samples <- mcstate::pmcmc(mcmc_pars, filter, control = control)
+samples
+```
 
 ## Assessing fit
 
+* Just look at how bad it is
 * Gelman's Rubin diagnostic
 * Tune your vcv
 * All your ideas are useful but can be misleading; adaptation is hard
 
-[Marc to add some details]
+## Plotting your chains
+
+```{r}
+samples$probabilities[, "log_posterior"]
+```
 
 ## Saving history
+
+* Save your trajectories at every collected sample
+* Save the final state at every sample
+* Save full model state at specific points.
 
 ## Autocorrelation
 
