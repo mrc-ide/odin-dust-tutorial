@@ -95,14 +95,14 @@ Our requirements
 
 ## data
 
-```r
+```{r}
 #| echo = TRUE
 incidence <- read.csv("data/incidence.csv")
 head(incidence)
 plot(cases ~ day, incidence, pch = 19, las = 1)
 ```
 
-```r
+```{r}
 #| echo = TRUE
 data <- mcstate::particle_filter_data(incidence, time = "day", rate = 4, initial_time = 0)
 head(data)
@@ -125,6 +125,7 @@ sir <- odin.dust::odin_dust("models/sir.R")
 ## The model over time
 
 ```{r}
+#| echo = TRUE
 pars <- list(beta = 0.25, gamma = 0.1)
 mod <- sir$new(pars, 0, 20)
 y <- mod$simulate(c(0, data$time_end))
@@ -141,6 +142,7 @@ points(cases ~ day, incidence, col = "red", pch = 19)
 * You might want different variables for your compare and for plotting
 
 ```{r}
+#| echo = TRUE
 index <- function(info) {
   list(run = c(incidence = info$index$cases_inc),
        state = c(t = info$index$time,
@@ -155,6 +157,7 @@ index(mod$info())
 ![State space model diagram](images/SSM.jpg)
 
 ```{r}
+#| echo = TRUE
 compare <- function(state, observed, pars = NULL) {
   modelled <- state["incidence", , drop = TRUE]
   lambda <- modelled + rexp(length(modelled), 1e6)
@@ -165,6 +168,7 @@ compare <- function(state, observed, pars = NULL) {
 given
 
 ```{r}
+#| echo = TRUE
 index
 head(data)
 ```
@@ -182,7 +186,8 @@ Or browse <https://github.com/mrc-ide/odin-dust-tutorial>
 
 # A particle filter
 
-```r
+```{r}
+#| echo = TRUE
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
                                        compare = compare, index = index)
 pars <- list(beta = 0.25, gamma = 0.1)
@@ -191,13 +196,15 @@ filter$run(pars)
 
 ## Particle filter marginal likelihoods are stochastic!
 
-```r
+```{r}
+#| echo = TRUE
 replicate(10, filter$run(pars))
 ```
 
 ## Likelihood variance changes with particle number
 
-```
+```{r}
+#| echo = TRUE
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 10,
                                        compare = compare, index = index)
 sort(replicate(10, filter$run(pars)))
@@ -215,7 +222,8 @@ sort(replicate(10, filter$run(pars)))
 
 ## Particle filter history is a tree
 
-```r
+```{r}
+#| echo = TRUE
 filter <- mcstate::particle_filter$new(data, model = sir, n_particles = 100,
                                        compare = compare, index = index)
 filter$run(save_history = TRUE)
@@ -227,6 +235,7 @@ points(cases ~ day, incidence, pch = 19, col = "red")
 ```
 
 ```{r}
+#| echo = TRUE
 matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011", 
         xlab = "Day", ylab = "Number of infecteds (I)", las = 1)
 ```
@@ -261,6 +270,7 @@ matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011",
 ## Priors
 
 ```{r}
+#| echo = TRUE
 priors <- list(
   mcstate::pmcmc_parameter("beta", 0.2, min = 0),
   mcstate::pmcmc_parameter("gamma", 0.1, min = 0, prior = function(p)
@@ -275,6 +285,7 @@ priors <- list(
 * Symmetric (except for reflections at any provided boundaries)
 
 ```{r}
+#| echo = TRUE
 vcv <- diag(0.1, 2)
 vcv
 ```
@@ -284,6 +295,7 @@ vcv
 Convert "mcmc parameters" into "model parameters"
 
 ```{r}
+#| echo = TRUE
 transform <- function(theta) {
   as.list(theta)
 }
@@ -300,18 +312,20 @@ make_transform <- function(contact_matrix, vaccine_schedule) {
          gamma = theta[["gamma"]])
   }
 }
-transform <- function(contact_matrix, vaccine_schedule)
+transform <- make_transform(contact_matrix, vaccine_schedule)
 ```
 
 ## Final parameter object
 
 ```{r}
+#| echo = TRUE
 mcmc_pars <- mcstate::pmcmc_parameters$new(priors, vcv, transform)
 ```
 
 ## Running PMCMC
 
 ```{r}
+#| echo = TRUE
 control <- mcstate::pmcmc_control(
     n_steps = 100,
     save_state = TRUE,
@@ -331,6 +345,7 @@ samples
 ## Plotting your chains
 
 ```{r}
+#| echo = TRUE
 samples$probabilities[, "log_posterior"]
 ```
 
