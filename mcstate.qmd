@@ -53,7 +53,7 @@ set.seed(1) # always the same
 - MCMC explores the parameter space by moving randomly making jumps from one value to the next
 - Probability of going from point to the other is determined by the proposal distribution and the ratio of the likelihood
 - Compared with "traditional" MCMC, in PMCMC, the likelihood estimation is approximated using a "particle filter"
-- The filter generate a set of "particles" i.e. trajectories compatible with the observation
+- The filter generates a set of "particles" i.e. trajectories compatible with the observation
 - It uses these trajectories to compute a (marginal) likelihood that can be use by the PMCMC
 
 ## Core algorithm
@@ -243,7 +243,7 @@ matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011",
 # PMCMC
 
 - Particle MCMC - like MCMC but with a particle filter
-- Slow, and hard to tune
+- Slower, and harder to tune
 - Easy to generate impossibly large amounts of data
 - Inherits all the issues of MCMC that you know and love
 
@@ -260,7 +260,7 @@ matplot(h["t", 1, ], t(h["I", , ]), type = "l", col = "#00000011",
 
 * Different to particle filter/model parameters
   - filter/model parameters are everything your model needs to run; may include data!
-  - pmcmc parameters are unstructured numeric vector
+  - pmcmc parameters (often called $\theta$) are unstructured numeric vector
   - the pmcmc parameters are statistical parameters, your model parameters are functional parameters
 * Requirements:
   - priors for mcmc parameters
@@ -338,9 +338,33 @@ samples
 ## Assessing fit
 
 * Just look at how bad it is
+* In PMCMC, all your ideas from MCMC will be useful but can be misleading; i.e. adaptation is hard
 * Gelman's Rubin diagnostic
-* Tune your vcv
-* All your ideas are useful but can be misleading; adaptation is hard
+* A lot of problems in MCMC come from autocorrelation
+
+## Autocorrelation
+
+* Notion from time series, which translates for (P)MCMC in term of the steps of the chains
+* Autocorrelation refers to the correlation between the values of a time series at different points in time. In MCMC, this means correlation between successive samples.
+* In the context of MCMC, autocorrelation can most of the time be substituted instead of "bad mixing"
+* A signature of random-walk MCMC
+* Likely to bias estimate (wrong mean) and reduce variance compare with the true posterior distribution of the estimate 
+* Linked with the notion of Effective Sample Size, roughly speaking ESS gives the equivalent in i.i.d. samples
+
+## Autocorrelation in practice FAQ
+
+* **Why is Autocorrelation a Problem?** For optimal performance, we want the samples to be independent and identically distributed (i.i.d.) samples from the target distribution. However, if the Markov Chain has high autocorrelation, it means that the samples are not i.i.d., and they do not accurately represent the target distribution.
+* **How to Detect Autocorrelation?** We can calculate the **autocorrelation function (ACF)**, which measures the correlation between the samples and their lagged values.
+* **How to Reduce Autocorrelation?** To mitigate the problem of autocorrelation, there's a number of strategies, including: using a longer chain, adapting the proposal distribution, using thinning or subsampling techniques. By reducing autocorrelation, we can obtain better estimates of the target distribution and improve the accuracy of our Bayesian inference.
+
+## Thinning the chain
+
+* Either before or after fit
+* Faster and less memory to thin before
+* More flexible to thin later
+* No real difference if history not saved
+
+This is useful because most of your chain is not interesting due to the autocorrelation.
 
 ## Plotting your chains
 
@@ -354,22 +378,6 @@ samples$probabilities[, "log_posterior"]
 * Save your trajectories at every collected sample
 * Save the final state at every sample
 * Save full model state at specific points.
-
-## Autocorrelation
-
-[Marc to add slide on statistical issues]
-
-* variance of the samples smaller than the true distribution
-* ergodicity and iid and autocorrelation
-
-## Thinning the chain
-
-* Either before or after fit
-* Faster and less memory to thin before
-* More flexible to thin later
-* No real difference if history not saved
-
-This is useful because most of your chain is not interesting.
 
 # Intermediate topics
 
@@ -391,6 +399,20 @@ This is useful because most of your chain is not interesting.
 * use on a GPU
 * use with ODE/SDE models
 * other inference methods - if2, smc2
+
+# Resources
+
+A nice PMCMC introduction written for the epidemiologist
+[Endo, A., van Leeuwen, E. & Baguelin, M. Introduction to particle Markov-chain Monte Carlo for disease dynamics modellers. Epidemics 29, 100363 (2019).] (https://www.sciencedirect.com/science/article/pii/S1755436519300301?via%3Dihub)
+
+A tutorial about SMC
+[Doucet, A. & Johansen, A. M. A Tutorial on Particle filtering and smoothing: Fiteen years later. Oxford Handb. nonlinear Filter. 656–705 (2011). doi:10.1.1.157.772](https://www.stats.ox.ac.uk/~doucet/doucet_johansen_tutorialPF2011.pdf)
+
+The reference paper on PMCMC
+[Andrieu, C., Doucet, A. & Holenstein, R. Particle Markov chain Monte Carlo methods. J. R. Stat. Soc. Ser. B (Statistical Methodol. 72, 269–342 (2010).](https://www.stats.ox.ac.uk/~doucet/andrieu_doucet_holenstein_PMCMC.pdf)
+
+A software oriented paper introducing odin, dust and mcstate
+[R. G. FitzJohn et al. Reproducible parallel inference and simulation of stochastic state space models using odin, dust, and mcstate. Wellcome Open Res. 2021 5288 5, 288 (2021).](https://wellcomeopenresearch.org/articles/5-288)
 
 
 
