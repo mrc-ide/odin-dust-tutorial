@@ -5,3 +5,4 @@
 site
 _site
 .Rproj.user
+_freeze
