@@ -4,8 +4,6 @@ author: "MRC Centre for Global Infectious Disease Analysis"
 format: revealjs
 ---
 
-# State space models
-
 ```{r}
 r_output <- function(path, highlight = NULL) {
   if (is.null(highlight)) {
@@ -23,7 +21,7 @@ knitr::knit_hooks$set(small_margins = function(before, options, envir) {
 })
 ```
 
-## What is it?
+# State space models
 
 - A state space model (SSM) is a mathematical framework for modelling a dynamical system.
 - It is built around two processes:

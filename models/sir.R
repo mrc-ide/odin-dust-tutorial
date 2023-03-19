@@ -1,6 +1,6 @@
 N <- S + I + R
-p_SI <- 1 - exp(-(beta) * I / N)
-p_IR <- 1 - exp(-(gamma))
+p_SI <- 1 - exp(-beta * I / N)
+p_IR <- 1 - exp(-gamma)
 n_IR <- rbinom(I, p_IR * dt)
 n_SI <- rbinom(S, p_SI * dt)
 

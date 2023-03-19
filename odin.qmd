@@ -167,7 +167,7 @@ mod <- gen$new(list(), time = 0, n_particles = 1)
 mod$run(10)
 ```
 
-* `run`: runs up to some time, returns final values(*)
+* `run`: runs up to some time, returns final values
 * `simulate`: runs over a series of times, returning values at each time
 * Docs for each method here: <https://mrc-ide.github.io/dust/reference/dust_generator.html>
 
@@ -255,6 +255,7 @@ m[, ] <- user() # age-structured contact matrix
 s_ij[, ] <- m[i, j] * I[j]
 lambda[] <- beta * sum(s_ij[i, ])
 p_SI[] <- 1 - exp(-lambda[i] * dt)
+n_SI[] <- rbinom(S[i], p_SI[i])
 update(S[]) <- S[i] - n_SI[i]
 N_age <- user()
 dim(S) <- N_age

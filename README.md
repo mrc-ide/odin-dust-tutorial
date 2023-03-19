@@ -6,5 +6,5 @@
 Compile with
 
 ```
-quarto render slides.qmd
+quarto render
 ```
